@@ -172,7 +172,7 @@ tr:hover td{background:var(--surface2)}
 <div id="print-area">
   <div id="print-estimate" style="display:none"></div>
   <div class="receipt-card" style="max-width:100%;box-shadow:none;border:none">
-    <div class="receipt-top">
+    <div class="receipt-top" style="display:grid;grid-template-columns:1fr auto;align-items:start;margin-bottom:24px">
       <div><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
       <div class="approval-box">
         <div class="approval-label">결 재</div>
@@ -907,15 +907,26 @@ function removeFromEstimate(idx){
 function printEstimate(){
   const area = document.getElementById('estimate-area');
   const printDiv = document.getElementById('print-estimate');
-  printDiv.innerHTML = area.innerHTML;
+  printDiv.innerHTML = area.outerHTML;
+  // 버튼/힌트 제거
   printDiv.querySelectorAll('button').forEach(b=>b.remove());
   printDiv.querySelectorAll('.print-hint').forEach(b=>b.remove());
+  // textarea → p 변환
   printDiv.querySelectorAll('textarea').forEach(t=>{
     const p=document.createElement('p');
     p.textContent=t.value;
     p.style.fontSize='13px';
     p.style.fontFamily='inherit';
+    p.style.padding='4px';
     t.replaceWith(p);
+  });
+  // input → span 변환 (인쇄 시 텍스트로)
+  printDiv.querySelectorAll('input').forEach(inp=>{
+    const span=document.createElement('span');
+    span.textContent=inp.value;
+    span.style.fontSize=inp.style.fontSize||'13px';
+    span.style.fontFamily='inherit';
+    inp.replaceWith(span);
   });
   document.body.classList.add('print-estimate');
   document.body.classList.remove('print-receipt');
