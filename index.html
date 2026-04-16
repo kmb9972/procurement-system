@@ -435,6 +435,16 @@ function showPage(id,el){
   if(id==='pending')filterPending();
 }
 
+// ── 탭 ──
+let currentDept='전체', currentStatus='전체', pendDept='전체';
+
+function setDeptTab(dept,el,page){
+  el.closest('.dept-tabs').querySelectorAll('.dept-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(page==='list'){currentDept=dept;filterList(true);}
+  else{pendDept=dept;filterPending();}
+}
+
 // ── 현황판 ──
 async function updateDashboard(){
   const year=document.getElementById('sel-year').value;
@@ -492,13 +502,13 @@ function setStatusFilter(s,el){
 }
 
 // ── 청구 내역 조회 ──
-async function filterList(all=false){
+async function filterList(yearOnly=false){
   const year=document.getElementById('list-year').value;
   const month=document.getElementById('list-month').value;
   document.getElementById('list-tbody').innerHTML='<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">로딩 중...</td></tr>';
   try {
-    const params={action:'getList', dept:currentDept==='전체'?'':currentDept};
-    if(!all){params.year=year;params.month=month;}
+    const params={action:'getList', dept:currentDept==='전체'?'':currentDept, year};
+    if(!yearOnly) params.month=month;
     const data = await apiGet(params);
     renderListTable(data);
   } catch(err) { showToast('조회 실패: '+err.message); }
