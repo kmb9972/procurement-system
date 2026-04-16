@@ -149,14 +149,17 @@ tr:hover td{background:var(--surface2)}
 .print-hint{font-size:12px;color:var(--text3);text-align:center;margin-top:12px}
 
 @media print{
-  #print-estimate { display:block !important; }
-  .sidebar,.page-header,.dept-tabs,.print-hint,.btn,.items-header,.form-actions{display:none!important}
+  .sidebar,.page-header,.dept-tabs,.print-hint,.btn,.items-header,.form-actions,.nav-item{display:none!important}
   .main,.layout,body{display:block!important;background:#fff!important}
   .page{display:none!important;padding:0!important}
-  #print-area{display:block!important}
+  #print-area{display:none!important}
+  #print-estimate{display:none!important}
+  body.print-receipt #print-area{display:block!important}
+  body.print-estimate #print-estimate{display:block!important}
   .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:20px!important}
 }
 #print-area{display:none}
+#print-estimate{display:none}
 
 .toast{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;padding:12px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;transform:translateY(80px);opacity:0;transition:all .3s;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2)}
 .toast.show{transform:translateY(0);opacity:1}
@@ -862,7 +865,10 @@ function removeFromReceipt(dept, num){
 // ── 인쇄 ──
 function printReceipt(){
   document.getElementById('print-tbody').innerHTML=document.getElementById('receipt-tbody').innerHTML;
+  document.body.classList.add('print-receipt');
+  document.body.classList.remove('print-estimate');
   window.print();
+  setTimeout(()=>document.body.classList.remove('print-receipt'), 1000);
 }
 
 function showToast(msg){
@@ -902,18 +908,22 @@ function printEstimate(){
   const area = document.getElementById('estimate-area');
   const printDiv = document.getElementById('print-estimate');
   printDiv.innerHTML = area.innerHTML;
-  printDiv.style.display = 'block';
-  // 버튼, X, textarea → 일반 텍스트로
   printDiv.querySelectorAll('button').forEach(b=>b.remove());
   printDiv.querySelectorAll('.print-hint').forEach(b=>b.remove());
   printDiv.querySelectorAll('textarea').forEach(t=>{
     const p=document.createElement('p');
     p.textContent=t.value;
-    p.style.cssText=t.style.cssText;
+    p.style.fontSize='13px';
+    p.style.fontFamily='inherit';
     t.replaceWith(p);
   });
+  document.body.classList.add('print-estimate');
+  document.body.classList.remove('print-receipt');
   window.print();
-  setTimeout(()=>{ printDiv.style.display='none'; printDiv.innerHTML=''; }, 1000);
+  setTimeout(()=>{
+    document.body.classList.remove('print-estimate');
+    printDiv.innerHTML='';
+  }, 1000);
 }
 
 // 초기화
