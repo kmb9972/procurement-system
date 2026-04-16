@@ -393,13 +393,23 @@ tr:hover td{background:var(--surface2)}
 <div class="toast" id="toast"></div>
 
 <script>
-// ── 데이터 ──
-const STATS={
-  '2026-4':{전기:{total:12,done:0,repair:0,pending:12},기계:{total:33,done:3,repair:0,pending:30},기관:{total:36,done:26,repair:4,pending:6}},
-  '2026-3':{전기:{total:54,done:40,repair:2,pending:12},기계:{total:105,done:88,repair:5,pending:12},기관:{total:101,done:90,repair:3,pending:8}},
-  '2026-2':{전기:{total:2,done:2,repair:0,pending:0},기계:{total:51,done:44,repair:2,pending:5},기관:{total:48,done:42,repair:1,pending:5}},
-  '2026-1':{전기:{total:44,done:38,repair:1,pending:5},기계:{total:88,done:76,repair:4,pending:8},기관:{total:74,done:66,repair:2,pending:6}},
-};
+// ── API 설정 ──
+const API_URL = 'https://script.google.com/macros/s/AKfycbz9iMl7fJ_O3uuq-32aKtaaNddoDQHmDPC44QozOcC7ltokEjeveDm-7L7_2vx7ba0K/exec';
+
+async function apiGet(params) {
+  const url = API_URL + '?' + new URLSearchParams(params);
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function apiPost(data) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
 let donutCharts={},barChart=null;
 let rowCount=0;
 
@@ -413,47 +423,128 @@ function showPage(id,el){
 }
 
 // ── 현황판 ──
-function updateDashboard(){
-  const key=`${document.getElementById('sel-year').value}-${document.getElementById('sel-month').value}`;
-  const d=STATS[key]||{전기:{total:0,done:0,repair:0,pending:0},기계:{total:0,done:0,repair:0,pending:0},기관:{total:0,done:0,repair:0,pending:0}};
-  const total=d.전기.total+d.기계.total+d.기관.total;
-  const done=d.전기.done+d.기계.done+d.기관.done;
-  const pend=d.전기.pending+d.기계.pending+d.기관.pending;
-  const rep=d.전기.repair+d.기계.repair+d.기관.repair;
-  document.getElementById('m-total').textContent=total;
-  document.getElementById('m-done').textContent=done;
-  document.getElementById('m-pending').textContent=pend;
-  document.getElementById('m-repair').textContent=rep;
-  document.getElementById('m-total-sub').textContent=`전기 ${d.전기.total} · 기계 ${d.기계.total} · 기관 ${d.기관.total}`;
-  document.getElementById('m-done-sub').textContent=`완료율 ${total?Math.round(done/total*100):0}%`;
-  document.getElementById('m-pending-sub').textContent=`전기 ${d.전기.pending} · 기계 ${d.기계.pending} · 기관 ${d.기관.pending}`;
-  document.getElementById('m-repair-sub').textContent=`전기 ${d.전기.repair} · 기계 ${d.기계.repair} · 기관 ${d.기관.repair}`;
-  ['전기','기계','기관'].forEach(dept=>{
-    const dd=d[dept];
-    document.getElementById('dn-'+dept).textContent=dd.total;
-    document.getElementById('sub-'+dept).textContent=`미입고 ${dd.pending}건 · 완료 ${dd.done+dd.repair}건`;
-    const vals=[dd.pending,dd.done,dd.repair].filter(v=>v>0);
-    const labels=['미입고','입고완료','수리완료'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
-    const colors=['#BA7517','#639922','#7F77DD'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
-    if(donutCharts[dept])donutCharts[dept].destroy();
-    donutCharts[dept]=new Chart(document.getElementById('donut-'+dept),{type:'doughnut',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed}건`}}}}});
-    document.getElementById('leg-'+dept).innerHTML=labels.map((l,i)=>`<span class="leg"><span class="leg-dot" style="background:${colors[i]}"></span>${l} ${vals[i]}</span>`).join('');
-  });
-  if(barChart)barChart.destroy();
-  barChart=new Chart(document.getElementById('bar-dept'),{type:'bar',data:{labels:['전기','기계','기관'],datasets:[{label:'총 청구',data:[d.전기.total,d.기계.total,d.기관.total],backgroundColor:'#85B7EB',borderColor:'#378ADD',borderWidth:1},{label:'미입고',data:[d.전기.pending,d.기계.pending,d.기관.pending],backgroundColor:'#FAC775',borderColor:'#BA7517',borderWidth:1},{label:'입고완료',data:[d.전기.done,d.기계.done,d.기관.done],backgroundColor:'#C0DD97',borderColor:'#639922',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:13,family:"'Noto Sans KR'"}}},y:{beginAtZero:true,ticks:{stepSize:10,font:{size:11}},grid:{color:'rgba(0,0,0,0.05)'}}}}});
+async function updateDashboard(){
+  const year=document.getElementById('sel-year').value;
+  const month=document.getElementById('sel-month').value;
+  document.getElementById('m-total').textContent='...';
+  document.getElementById('m-done').textContent='...';
+  document.getElementById('m-pending').textContent='...';
+  document.getElementById('m-repair').textContent='...';
+  try {
+    const d = await apiGet({action:'getStats', year, month});
+    const total=d.전기.total+d.기계.total+d.기관.total;
+    const done=d.전기.done+d.기계.done+d.기관.done;
+    const pend=d.전기.pending+d.기계.pending+d.기관.pending;
+    const rep=d.전기.repair+d.기계.repair+d.기관.repair;
+    document.getElementById('m-total').textContent=total;
+    document.getElementById('m-done').textContent=done;
+    document.getElementById('m-pending').textContent=pend;
+    document.getElementById('m-repair').textContent=rep;
+    document.getElementById('m-total-sub').textContent=`전기 ${d.전기.total} · 기계 ${d.기계.total} · 기관 ${d.기관.total}`;
+    document.getElementById('m-done-sub').textContent=`완료율 ${total?Math.round(done/total*100):0}%`;
+    document.getElementById('m-pending-sub').textContent=`전기 ${d.전기.pending} · 기계 ${d.기계.pending} · 기관 ${d.기관.pending}`;
+    document.getElementById('m-repair-sub').textContent=`전기 ${d.전기.repair} · 기계 ${d.기계.repair} · 기관 ${d.기관.repair}`;
+    ['전기','기계','기관'].forEach(dept=>{
+      const dd=d[dept];
+      document.getElementById('dn-'+dept).textContent=dd.total;
+      document.getElementById('sub-'+dept).textContent=`미입고 ${dd.pending}건 · 완료 ${dd.done+dd.repair}건`;
+      const vals=[dd.pending,dd.done,dd.repair].filter(v=>v>0);
+      const labels=['미입고','입고완료','수리완료'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
+      const colors=['#BA7517','#639922','#7F77DD'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
+      if(donutCharts[dept])donutCharts[dept].destroy();
+      donutCharts[dept]=new Chart(document.getElementById('donut-'+dept),{type:'doughnut',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed}건`}}}}});
+      document.getElementById('leg-'+dept).innerHTML=labels.map((l,i)=>`<span class="leg"><span class="leg-dot" style="background:${colors[i]}"></span>${l} ${vals[i]}</span>`).join('');
+    });
+    if(barChart)barChart.destroy();
+    barChart=new Chart(document.getElementById('bar-dept'),{type:'bar',data:{labels:['전기','기계','기관'],datasets:[{label:'총 청구',data:[d.전기.total,d.기계.total,d.기관.total],backgroundColor:'#85B7EB',borderColor:'#378ADD',borderWidth:1},{label:'미입고',data:[d.전기.pending,d.기계.pending,d.기관.pending],backgroundColor:'#FAC775',borderColor:'#BA7517',borderWidth:1},{label:'입고완료',data:[d.전기.done,d.기계.done,d.기관.done],backgroundColor:'#C0DD97',borderColor:'#639922',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:13,family:"'Noto Sans KR'"}}},y:{beginAtZero:true,ticks:{stepSize:10,font:{size:11}},grid:{color:'rgba(0,0,0,0.05)'}}}}}); 
+  } catch(err) {
+    showToast('데이터 로딩 실패: '+err.message);
+  }
 }
 
 // ── 탭 ──
+let currentDept='전체', currentStatus='전체', pendDept='전체';
+
 function setDeptTab(dept,el,page){
-  const parent=document.getElementById('page-'+page==='list'?'page-list':'page-pending');
   el.closest('.dept-tabs').querySelectorAll('.dept-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
+  if(page==='list'){currentDept=dept;filterList();}
+  else{pendDept=dept;filterPending();}
 }
 function setStatusFilter(s,el){
+  currentStatus=s;
   document.querySelectorAll('#page-list .filter-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
+  filterList();
 }
-function filterList(){showToast('구글 시트 연동 후 조회됩니다');}
+
+// ── 청구 내역 조회 ──
+async function filterList(){
+  const year=document.getElementById('list-year').value;
+  const month=document.getElementById('list-month').value;
+  document.getElementById('list-tbody').innerHTML='<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">로딩 중...</td></tr>';
+  try {
+    const data = await apiGet({action:'getList', dept:currentDept==='전체'?'':currentDept, year, month});
+    renderListTable(data);
+  } catch(err) { showToast('조회 실패: '+err.message); }
+}
+
+function renderListTable(data){
+  let filtered=data;
+  if(currentStatus==='미입고') filtered=data.filter(r=>!['입고 완료','입고완료','수리 완료','수리완료'].includes(String(r.status||'').trim()));
+  else if(currentStatus==='완료') filtered=data.filter(r=>['입고 완료','입고완료','수리 완료','수리완료'].includes(String(r.status||'').trim()));
+  if(!filtered.length){
+    document.getElementById('list-tbody').innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><div>데이터가 없습니다</div></div></td></tr>';
+    document.getElementById('list-count').textContent='0 건';
+    return;
+  }
+  document.getElementById('list-count').textContent=`${filtered.length} 건`;
+  document.getElementById('list-tbody').innerHTML=filtered.map(r=>{
+    const s=String(r.status||'').trim();
+    let sc='s-pending';
+    if(s.includes('완료'))sc='s-done';
+    else if(s.includes('수리'))sc='s-repair';
+    else if(s.includes('긴급'))sc='s-urgent';
+    return `<tr>
+      <td><span class="dept-badge dept-${r.dept}">${r.dept}</span></td>
+      <td>${r.date||''}</td><td>${r.process||''}</td><td>${r.requester||''}</td>
+      <td>${r.item||''}</td>
+      <td style="font-size:12px;color:var(--text2)">${r.spec||''}</td>
+      <td style="text-align:center">${r.qty||''}</td>
+      <td style="text-align:center">${r.unit||''}</td>
+      <td>${r.supplier||''}</td>
+      <td><span class="status-badge ${sc}">${r.status||'미확인'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── 미입고 조회 ──
+async function filterPending(){
+  document.getElementById('pend-tbody').innerHTML='<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">로딩 중...</td></tr>';
+  try {
+    const data = await apiGet({action:'getPending', dept:pendDept==='전체'?'':pendDept});
+    if(!data.length){
+      document.getElementById('pend-tbody').innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⏳</div><div>미입고 항목이 없습니다</div></div></td></tr>';
+      return;
+    }
+    document.getElementById('pend-tbody').innerHTML=data.map(r=>{
+      const s=String(r.status||'').trim();
+      let sc='s-pending';
+      if(s.includes('수리'))sc='s-repair';
+      if(s.includes('긴급'))sc='s-urgent';
+      return `<tr>
+        <td><span class="dept-badge dept-${r.dept}">${r.dept}</span></td>
+        <td>${r.date||''}</td><td>${r.requester||''}</td><td>${r.item||''}</td>
+        <td style="font-size:12px;color:var(--text2)">${r.spec||''}</td>
+        <td style="text-align:center">${r.qty||''}</td>
+        <td style="text-align:center">${r.unit||''}</td>
+        <td>${r.supplier||''}</td>
+        <td><span class="status-badge ${sc}">${r.status||'미확인'}</span></td>
+        <td style="font-size:12px;color:var(--text2)">${r.note||''}</td>
+      </tr>`;
+    }).join('');
+  } catch(err) { showToast('조회 실패: '+err.message); }
+}
 
 // ── 품목 행 추가/삭제 ──
 function addRow(){
@@ -495,21 +586,47 @@ function reorderRows(){
 }
 
 // ── 폼 제출 ──
-function submitForm(){
+async function submitForm(){
   const required=[['f-dept','부서'],['f-process','공정'],['f-location','사용처'],['f-requester','청구자'],['f-date','청구일']];
   for(const [id,label] of required){
     if(!document.getElementById(id).value){showToast(`${label}을(를) 입력해주세요`);document.getElementById(id).focus();return;}
   }
   const rows=document.querySelectorAll('#items-tbody tr');
   if(rows.length===0){showToast('품목을 1개 이상 추가해주세요');return;}
+  const items=[];
   let valid=true;
   rows.forEach(tr=>{
     const id=tr.id.replace('row-','');
-    if(!document.getElementById('item-'+id)?.value||!document.getElementById('qty-'+id)?.value){valid=false;}
+    const item=document.getElementById('item-'+id)?.value;
+    const qty=document.getElementById('qty-'+id)?.value;
+    if(!item||!qty){valid=false;return;}
+    items.push({
+      item, qty:Number(qty),
+      spec:document.getElementById('spec-'+id)?.value||'',
+      purpose:document.getElementById('purpose-'+id)?.value||'',
+      unit:document.getElementById('unit-'+id)?.value||'',
+      link:document.getElementById('link-'+id)?.value||'',
+    });
   });
   if(!valid){showToast('품명과 수량은 필수입니다');return;}
-  showToast(`✓ ${rows.length}개 품목이 등록되었습니다`);
-  setTimeout(()=>{showPage('list',document.querySelectorAll('.nav-item')[1]);},1000);
+  showToast('등록 중...');
+  try {
+    const result = await apiPost({
+      action:'addRows',
+      dept:document.getElementById('f-dept').value,
+      process:document.getElementById('f-process').value,
+      location:document.getElementById('f-location').value,
+      requester:document.getElementById('f-requester').value,
+      date:document.getElementById('f-date').value,
+      items,
+    });
+    if(result.error) throw new Error(result.error);
+    showToast(`✓ ${items.length}개 품목이 등록되었습니다`);
+    resetAll();
+    setTimeout(()=>{showPage('list',document.querySelectorAll('.nav-item')[1]);filterList();},1000);
+  } catch(err) {
+    showToast('등록 실패: '+err.message);
+  }
 }
 
 function resetAll(){
@@ -538,6 +655,12 @@ addRow();
 addRow();
 addRow();
 updateDashboard();
+// 페이지 진입시 데이터 로드
+document.querySelectorAll('.nav-item').forEach(item=>{
+  const orig=item.getAttribute('onclick');
+  if(orig&&orig.includes('list')) item.addEventListener('click',()=>filterList());
+  if(orig&&orig.includes('pending')) item.addEventListener('click',()=>filterPending());
+});
 </script>
 </body>
 </html>
