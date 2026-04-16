@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>종합안전센터 물품 청구 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#f4f5f7;--surface:#fff;--surface2:#f8f9fa;--border:#e4e6ea;--border2:#d0d3da;
+  --text:#1a1d23;--text2:#5c6170;--text3:#9aa0ad;
+  --accent:#1F3864;--accent2:#2F5597;
+  --green:#27500A;--green-bg:#E2EFDA;--green-mid:#639922;
+  --amber:#633806;--amber-bg:#FFF2CC;--amber-mid:#BA7517;
+  --red:#791F1F;--red-bg:#FCE4EC;--red-mid:#E24B4A;
+  --blue-mid:#378ADD;--blue-bg:#E6F1FB;--blue-dark:#0C447C;
+  --purple-mid:#7F77DD;--purple-bg:#EEEDFE;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--accent);color:#fff;display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.logo-title{font-size:13px;font-weight:700;letter-spacing:.04em;opacity:.9}
+.logo-sub{font-size:11px;opacity:.5;margin-top:2px}
+.nav{padding:12px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;cursor:pointer;opacity:.65;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{opacity:.9;background:rgba(255,255,255,.06)}
+.nav-item.active{opacity:1;background:rgba(255,255,255,.1);border-left-color:#fff;font-weight:500}
+.nav-icon{width:18px;height:18px;flex-shrink:0}
+.nav-section{font-size:10px;letter-spacing:.08em;opacity:.4;padding:16px 20px 6px;text-transform:uppercase}
+
+.main{flex:1;overflow:auto}
+.page{display:none;padding:28px 32px}
+.page.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-title{font-size:20px;font-weight:700}
+.page-sub{font-size:13px;color:var(--text3);margin-top:2px}
+
+.period-bar{display:flex;align-items:center;gap:8px}
+.period-bar select{padding:7px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);cursor:pointer}
+
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px}
+.metric-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow)}
+.metric-label{font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500}
+.metric-value{font-size:28px;font-weight:700;line-height:1}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:6px}
+
+.chart-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.chart-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:18px;box-shadow:var(--shadow)}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.chart-sub{font-size:11px;color:var(--text3);margin-bottom:14px}
+.donut-wrap{position:relative;height:150px}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.donut-num{font-size:22px;font-weight:700;line-height:1}
+.donut-label{font-size:10px;color:var(--text3);margin-top:2px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+.bar-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:18px;box-shadow:var(--shadow);margin-bottom:20px}
+.bar-wrap{position:relative;height:200px}
+
+.table-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.table-title{font-size:14px;font-weight:600}
+
+.dept-tabs{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.dept-tab{padding:10px 20px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:all .15s;font-family:inherit;background:none;border-top:none;border-left:none;border-right:none}
+.dept-tab:hover{color:var(--text);background:var(--surface2)}
+.dept-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+
+.filter-tabs{display:flex;gap:4px}
+.filter-tab{padding:4px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text2);transition:all .15s;font-family:inherit}
+.filter-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+
+.dept-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.dept-전기{background:var(--blue-bg);color:var(--blue-dark)}
+.dept-기계{background:var(--green-bg);color:var(--green)}
+.dept-기관{background:var(--amber-bg);color:var(--amber)}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.s-done{background:var(--green-bg);color:var(--green)}
+.s-pending{background:var(--amber-bg);color:var(--amber)}
+.s-repair{background:var(--purple-bg);color:#534AB7}
+.s-urgent{background:var(--red-bg);color:var(--red)}
+
+/* ── 청구 등록 폼 ── */
+.form-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.form-title{font-size:15px;font-weight:600;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.form-full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:12px;font-weight:500;color:var(--text2)}
+.form-label span{color:var(--red-mid)}
+.form-input,.form-select{padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);transition:border-color .15s;width:100%}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--accent2)}
+
+/* ── 품목 테이블 ── */
+.items-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.items-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.items-title{font-size:14px;font-weight:600}
+.items-table{width:100%;border-collapse:collapse;font-size:13px}
+.items-table th{padding:9px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap}
+.items-table td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:middle}
+.items-table tr:last-child td{border-bottom:none}
+.items-table tr:hover td{background:#f0f4ff}
+.cell-input{padding:7px 8px;border:1px solid transparent;border-radius:var(--radius-sm);font-size:13px;font-family:inherit;color:var(--text);background:transparent;width:100%;transition:all .15s}
+.cell-input:focus{outline:none;border-color:var(--accent2);background:var(--surface)}
+.cell-input:hover{border-color:var(--border2);background:var(--surface)}
+.cell-select{padding:7px 6px;border:1px solid transparent;border-radius:var(--radius-sm);font-size:12px;font-family:inherit;color:var(--text);background:transparent;width:100%;cursor:pointer;transition:all .15s}
+.cell-select:focus{outline:none;border-color:var(--accent2);background:var(--surface)}
+.cell-select:hover{border-color:var(--border2);background:var(--surface)}
+.row-num{font-size:12px;color:var(--text3);text-align:center;width:32px}
+.del-btn{width:26px;height:26px;border-radius:50%;border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.del-btn:hover{background:var(--red-bg);color:var(--red-mid)}
+.add-row-btn{display:flex;align-items:center;gap:6px;padding:10px 18px;font-size:13px;color:var(--accent2);cursor:pointer;border-top:1px solid var(--border);background:var(--surface2);transition:background .15s;border:none;width:100%;font-family:inherit;border-top:1px solid var(--border)}
+.add-row-btn:hover{background:var(--blue-bg)}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;background:var(--surface2);border-top:1px solid var(--border)}
+
+.btn{padding:9px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .15s}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-sm{padding:6px 14px;font-size:12px}
+
+/* 물품청구서 */
+.receipt-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:32px;box-shadow:var(--shadow);max-width:860px}
+.receipt-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.receipt-title{font-size:24px;font-weight:700;letter-spacing:.06em}
+.receipt-dept{font-size:13px;color:var(--text2);margin-top:4px}
+.approval-box{border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden}
+.approval-label{background:var(--surface2);padding:4px 24px;font-size:11px;font-weight:600;text-align:center;border-bottom:1px solid var(--border)}
+.approval-sign{height:52px;width:100px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3)}
+.receipt-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
+.receipt-table th{background:var(--accent);color:#fff;padding:9px 12px;font-size:12px;font-weight:500}
+.receipt-table td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.receipt-table tr:nth-child(even) td{background:var(--surface2)}
+.receipt-total-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 20px;font-size:14px;font-weight:600}
+.print-hint{font-size:12px;color:var(--text3);text-align:center;margin-top:12px}
+
+@media print{
+  .sidebar,.page-header,.dept-tabs,.print-hint,.btn,.items-header,.form-actions{display:none!important}
+  .main,.layout,body{display:block!important;background:#fff!important}
+  .page{display:none!important;padding:0!important}
+  #print-area{display:block!important}
+  .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:20px!important}
+}
+#print-area{display:none}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;padding:12px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;transform:translateY(80px);opacity:0;transition:all .3s;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.show{transform:translateY(0);opacity:1}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:.4}
+</style>
+</head>
+<body>
+
+<div id="print-area">
+  <div class="receipt-card" style="max-width:100%;box-shadow:none;border:none">
+    <div class="receipt-top">
+      <div><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
+      <div class="approval-box">
+        <div class="approval-label">결 재</div>
+        <div style="display:flex"><div style="border-right:1px solid var(--border);padding:4px 10px;font-size:11px;text-align:center;background:var(--surface2)">팀장</div><div class="approval-sign"></div></div>
+      </div>
+    </div>
+    <table class="receipt-table"><thead><tr><th>번호</th><th>날짜</th><th>청구자</th><th>품명</th><th>품번/규격</th><th>수량</th><th>단위</th><th>용도</th><th>구입처</th></tr></thead><tbody id="print-tbody"></tbody></table>
+    <div style="display:flex;justify-content:flex-end"><div class="receipt-total-box" id="print-total">합계 : 0 건</div></div>
+  </div>
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="logo"><div class="logo-title">종합안전센터</div><div class="logo-sub">물품 청구 시스템</div></div>
+  <nav class="nav">
+    <div class="nav-section">메뉴</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>현황판
+    </div>
+    <div class="nav-item" onclick="showPage('list',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>청구 내역
+    </div>
+    <div class="nav-item" onclick="showPage('pending',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>미입고 현황
+    </div>
+    <div class="nav-section">청구</div>
+    <div class="nav-item" onclick="showPage('form',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>물품 청구 등록
+    </div>
+    <div class="nav-item" onclick="showPage('receipt',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 17H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"/><path d="M9 9h6M9 13h4"/></svg>물품청구서 출력
+    </div>
+  </nav>
+</aside>
+
+<main class="main">
+
+<!-- 현황판 -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div><div class="page-title">현황판</div><div class="page-sub">부서별 청구 현황을 한눈에 확인하세요</div></div>
+    <div class="period-bar">
+      <select id="sel-year" onchange="updateDashboard()"><option>2026</option><option>2025</option></select>
+      <select id="sel-month" onchange="updateDashboard()"><option value="4">4월</option><option value="3">3월</option><option value="2">2월</option><option value="1">1월</option></select>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric-card"><div class="metric-label">총 청구 건수</div><div class="metric-value" id="m-total" style="color:var(--accent2)">—</div><div class="metric-sub" id="m-total-sub"></div></div>
+    <div class="metric-card"><div class="metric-label">입고 완료</div><div class="metric-value" id="m-done" style="color:var(--green-mid)">—</div><div class="metric-sub" id="m-done-sub"></div></div>
+    <div class="metric-card"><div class="metric-label">미입고</div><div class="metric-value" id="m-pending" style="color:var(--amber-mid)">—</div><div class="metric-sub" id="m-pending-sub"></div></div>
+    <div class="metric-card"><div class="metric-label">수리 진행 중</div><div class="metric-value" id="m-repair" style="color:var(--purple-mid)">—</div><div class="metric-sub" id="m-repair-sub"></div></div>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">전기</div><div class="chart-sub" id="sub-전기"></div><div class="donut-wrap"><canvas id="donut-전기" role="img" aria-label="전기 청구 현황"></canvas><div class="donut-center"><div class="donut-num" id="dn-전기">—</div><div class="donut-label">총 건수</div></div></div><div class="legend" id="leg-전기"></div></div>
+    <div class="chart-card"><div class="chart-title">기계</div><div class="chart-sub" id="sub-기계"></div><div class="donut-wrap"><canvas id="donut-기계" role="img" aria-label="기계 청구 현황"></canvas><div class="donut-center"><div class="donut-num" id="dn-기계">—</div><div class="donut-label">총 건수</div></div></div><div class="legend" id="leg-기계"></div></div>
+    <div class="chart-card"><div class="chart-title">기관</div><div class="chart-sub" id="sub-기관"></div><div class="donut-wrap"><canvas id="donut-기관" role="img" aria-label="기관 청구 현황"></canvas><div class="donut-center"><div class="donut-num" id="dn-기관">—</div><div class="donut-label">총 건수</div></div></div><div class="legend" id="leg-기관"></div></div>
+  </div>
+  <div class="bar-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:600">부서별 비교</div>
+      <div class="legend"><span class="leg"><span class="leg-dot" style="background:#85B7EB"></span>총 청구</span><span class="leg"><span class="leg-dot" style="background:#FAC775"></span>미입고</span><span class="leg"><span class="leg-dot" style="background:#C0DD97"></span>입고완료</span></div>
+    </div>
+    <div class="bar-wrap"><canvas id="bar-dept" role="img" aria-label="부서별 청구 현황"></canvas></div>
+  </div>
+</div>
+
+<!-- 청구 내역 -->
+<div class="page" id="page-list">
+  <div class="page-header">
+    <div><div class="page-title">청구 내역</div><div class="page-sub">부서별 물품 청구 내역을 조회합니다</div></div>
+    <div class="period-bar">
+      <select id="list-year"><option>2026</option><option>2025</option></select>
+      <select id="list-month"><option value="4">4월</option><option value="3">3월</option><option value="2">2월</option><option value="1">1월</option></select>
+      <button class="btn btn-primary" onclick="filterList()">조회</button>
+    </div>
+  </div>
+  <div class="table-card">
+    <div class="dept-tabs">
+      <button class="dept-tab active" onclick="setDeptTab('전체',this,'list')">전체</button>
+      <button class="dept-tab" onclick="setDeptTab('전기',this,'list')">전기</button>
+      <button class="dept-tab" onclick="setDeptTab('기계',this,'list')">기계</button>
+      <button class="dept-tab" onclick="setDeptTab('기관',this,'list')">기관</button>
+    </div>
+    <div class="table-header">
+      <div class="table-title" id="list-count">0 건</div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setStatusFilter('전체',this)">전체</button>
+        <button class="filter-tab" onclick="setStatusFilter('미입고',this)">미입고</button>
+        <button class="filter-tab" onclick="setStatusFilter('완료',this)">완료</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table><thead><tr><th>부서</th><th>날짜</th><th>공정</th><th>청구자</th><th>품명</th><th>규격</th><th>수량</th><th>단위</th><th>구입처</th><th>진행상태</th></tr></thead>
+      <tbody id="list-tbody"><tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><div>구글 시트 연동 후 데이터가 표시됩니다</div></div></td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- 미입고 현황 -->
+<div class="page" id="page-pending">
+  <div class="page-header">
+    <div><div class="page-title">미입고 현황</div><div class="page-sub">입고 완료되지 않은 품목만 모아서 확인합니다</div></div>
+    <div class="period-bar">
+      <select><option>2026</option><option>2025</option></select>
+      <select><option value="4">4월</option><option value="3">3월</option><option value="2">2월</option><option value="1">1월</option></select>
+    </div>
+  </div>
+  <div class="table-card">
+    <div class="dept-tabs">
+      <button class="dept-tab active" onclick="setDeptTab('전체',this,'pend')">전체</button>
+      <button class="dept-tab" onclick="setDeptTab('전기',this,'pend')">전기</button>
+      <button class="dept-tab" onclick="setDeptTab('기계',this,'pend')">기계</button>
+      <button class="dept-tab" onclick="setDeptTab('기관',this,'pend')">기관</button>
+    </div>
+    <div class="table-header"><div class="table-title">미입고 목록</div></div>
+    <div style="overflow-x:auto">
+      <table><thead><tr><th>부서</th><th>날짜</th><th>청구자</th><th>품명</th><th>규격</th><th>수량</th><th>단위</th><th>구입처</th><th>진행상태</th><th>비고</th></tr></thead>
+      <tbody id="pend-tbody"><tr><td colspan="10"><div class="empty-state"><div class="empty-icon">⏳</div><div>구글 시트 연동 후 데이터가 표시됩니다</div></div></td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- 물품 청구 등록 -->
+<div class="page" id="page-form">
+  <div class="page-header">
+    <div><div class="page-title">물품 청구 등록</div><div class="page-sub">공통 정보를 입력하고 품목을 행으로 추가하세요</div></div>
+  </div>
+
+  <!-- 공통 정보 -->
+  <div class="form-card">
+    <div class="form-title">공통 정보</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">부서 <span>*</span></label>
+        <select class="form-select" id="f-dept">
+          <option value="">선택</option><option>전기</option><option>기계</option><option>기관</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">공정 <span>*</span></label>
+        <select class="form-select" id="f-process">
+          <option value="">선택</option>
+          <option>공통</option><option>시설</option><option>제판</option><option>인쇄</option>
+          <option>제책</option><option>패키지</option><option>물류</option><option>기숙사</option>
+          <option>매엽</option><option>윤전</option><option>박물관</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">사용처 <span>*</span></label>
+        <input class="form-input" id="f-location" placeholder="예) K-1000, 기계실">
+      </div>
+      <div class="form-group">
+        <label class="form-label">청구자 <span>*</span></label>
+        <input class="form-input" id="f-requester" placeholder="이름">
+      </div>
+      <div class="form-group">
+        <label class="form-label">청구일 <span>*</span></label>
+        <input class="form-input" type="date" id="f-date">
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 품목 행 테이블 -->
+  <div class="items-card">
+    <div class="items-header">
+      <div class="items-title">품목 목록</div>
+      <div style="font-size:12px;color:var(--text3)">셀을 클릭하여 직접 입력하세요</div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width:32px">#</th>
+            <th style="min-width:180px">품명 *</th>
+            <th style="min-width:160px">품번 / 규격</th>
+            <th style="min-width:180px">용도</th>
+            <th style="width:70px">수량 *</th>
+            <th style="width:80px">단위</th>
+            <th style="min-width:160px">구매링크</th>
+            <th style="width:32px"></th>
+          </tr>
+        </thead>
+        <tbody id="items-tbody"></tbody>
+      </table>
+    </div>
+    <button class="add-row-btn" onclick="addRow()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      줄 추가
+    </button>
+    <div class="form-actions">
+      <button class="btn" onclick="resetAll()">전체 초기화</button>
+      <button class="btn btn-primary" onclick="submitForm()">청구 등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- 물품청구서 출력 -->
+<div class="page" id="page-receipt">
+  <div class="page-header">
+    <div><div class="page-title">물품청구서 출력</div><div class="page-sub">✓ 체크된 항목이 자동으로 청구서에 반영됩니다</div></div>
+    <button class="btn btn-primary" onclick="printReceipt()">🖨 인쇄</button>
+  </div>
+  <div class="receipt-card">
+    <div class="receipt-top">
+      <div><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
+      <div class="approval-box">
+        <div class="approval-label">결 재</div>
+        <div style="display:flex"><div style="border-right:1px solid var(--border);padding:4px 10px;font-size:11px;text-align:center;background:var(--surface2)">팀장</div><div class="approval-sign"></div></div>
+      </div>
+    </div>
+    <table class="receipt-table">
+      <thead><tr><th style="width:36px">번호</th><th>날짜</th><th>청구자</th><th>품명</th><th>품번/규격</th><th style="width:50px">수량</th><th style="width:50px">단위</th><th>용도</th><th>구입처</th></tr></thead>
+      <tbody id="receipt-tbody"><tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📄</div><div>청구 내역에서 ✓ 체크 후 이 화면에서 확인하세요</div></div></td></tr></tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><div class="receipt-total-box">합계 수량 : — 건</div></div>
+    <div class="print-hint">※ 인쇄 버튼을 클릭하면 청구서만 출력됩니다</div>
+  </div>
+</div>
+
+</main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 데이터 ──
+const STATS={
+  '2026-4':{전기:{total:12,done:0,repair:0,pending:12},기계:{total:33,done:3,repair:0,pending:30},기관:{total:36,done:26,repair:4,pending:6}},
+  '2026-3':{전기:{total:54,done:40,repair:2,pending:12},기계:{total:105,done:88,repair:5,pending:12},기관:{total:101,done:90,repair:3,pending:8}},
+  '2026-2':{전기:{total:2,done:2,repair:0,pending:0},기계:{total:51,done:44,repair:2,pending:5},기관:{total:48,done:42,repair:1,pending:5}},
+  '2026-1':{전기:{total:44,done:38,repair:1,pending:5},기계:{total:88,done:76,repair:4,pending:8},기관:{total:74,done:66,repair:2,pending:6}},
+};
+let donutCharts={},barChart=null;
+let rowCount=0;
+
+// ── 페이지 전환 ──
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  if(id==='dashboard')updateDashboard();
+}
+
+// ── 현황판 ──
+function updateDashboard(){
+  const key=`${document.getElementById('sel-year').value}-${document.getElementById('sel-month').value}`;
+  const d=STATS[key]||{전기:{total:0,done:0,repair:0,pending:0},기계:{total:0,done:0,repair:0,pending:0},기관:{total:0,done:0,repair:0,pending:0}};
+  const total=d.전기.total+d.기계.total+d.기관.total;
+  const done=d.전기.done+d.기계.done+d.기관.done;
+  const pend=d.전기.pending+d.기계.pending+d.기관.pending;
+  const rep=d.전기.repair+d.기계.repair+d.기관.repair;
+  document.getElementById('m-total').textContent=total;
+  document.getElementById('m-done').textContent=done;
+  document.getElementById('m-pending').textContent=pend;
+  document.getElementById('m-repair').textContent=rep;
+  document.getElementById('m-total-sub').textContent=`전기 ${d.전기.total} · 기계 ${d.기계.total} · 기관 ${d.기관.total}`;
+  document.getElementById('m-done-sub').textContent=`완료율 ${total?Math.round(done/total*100):0}%`;
+  document.getElementById('m-pending-sub').textContent=`전기 ${d.전기.pending} · 기계 ${d.기계.pending} · 기관 ${d.기관.pending}`;
+  document.getElementById('m-repair-sub').textContent=`전기 ${d.전기.repair} · 기계 ${d.기계.repair} · 기관 ${d.기관.repair}`;
+  ['전기','기계','기관'].forEach(dept=>{
+    const dd=d[dept];
+    document.getElementById('dn-'+dept).textContent=dd.total;
+    document.getElementById('sub-'+dept).textContent=`미입고 ${dd.pending}건 · 완료 ${dd.done+dd.repair}건`;
+    const vals=[dd.pending,dd.done,dd.repair].filter(v=>v>0);
+    const labels=['미입고','입고완료','수리완료'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
+    const colors=['#BA7517','#639922','#7F77DD'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
+    if(donutCharts[dept])donutCharts[dept].destroy();
+    donutCharts[dept]=new Chart(document.getElementById('donut-'+dept),{type:'doughnut',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed}건`}}}}});
+    document.getElementById('leg-'+dept).innerHTML=labels.map((l,i)=>`<span class="leg"><span class="leg-dot" style="background:${colors[i]}"></span>${l} ${vals[i]}</span>`).join('');
+  });
+  if(barChart)barChart.destroy();
+  barChart=new Chart(document.getElementById('bar-dept'),{type:'bar',data:{labels:['전기','기계','기관'],datasets:[{label:'총 청구',data:[d.전기.total,d.기계.total,d.기관.total],backgroundColor:'#85B7EB',borderColor:'#378ADD',borderWidth:1},{label:'미입고',data:[d.전기.pending,d.기계.pending,d.기관.pending],backgroundColor:'#FAC775',borderColor:'#BA7517',borderWidth:1},{label:'입고완료',data:[d.전기.done,d.기계.done,d.기관.done],backgroundColor:'#C0DD97',borderColor:'#639922',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:13,family:"'Noto Sans KR'"}}},y:{beginAtZero:true,ticks:{stepSize:10,font:{size:11}},grid:{color:'rgba(0,0,0,0.05)'}}}}});
+}
+
+// ── 탭 ──
+function setDeptTab(dept,el,page){
+  const parent=document.getElementById('page-'+page==='list'?'page-list':'page-pending');
+  el.closest('.dept-tabs').querySelectorAll('.dept-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+function setStatusFilter(s,el){
+  document.querySelectorAll('#page-list .filter-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+function filterList(){showToast('구글 시트 연동 후 조회됩니다');}
+
+// ── 품목 행 추가/삭제 ──
+function addRow(){
+  rowCount++;
+  const id=rowCount;
+  const tr=document.createElement('tr');
+  tr.id='row-'+id;
+  tr.innerHTML=`
+    <td class="row-num">${document.getElementById('items-tbody').children.length+1}</td>
+    <td><input class="cell-input" placeholder="품명 입력" id="item-${id}"></td>
+    <td><input class="cell-input" placeholder="품번 / 규격" id="spec-${id}"></td>
+    <td><input class="cell-input" placeholder="용도" id="purpose-${id}"></td>
+    <td><input class="cell-input" type="number" placeholder="0" min="1" style="text-align:right" id="qty-${id}"></td>
+    <td>
+      <select class="cell-select" id="unit-${id}">
+        <option value="">-</option>
+        <option>EA</option><option>롤</option><option>박스</option><option>미터</option><option>식</option>
+      </select>
+    </td>
+    <td><input class="cell-input" placeholder="https://..." id="link-${id}"></td>
+    <td><button class="del-btn" onclick="delRow(${id})" title="삭제">×</button></td>
+  `;
+  document.getElementById('items-tbody').appendChild(tr);
+  document.getElementById('item-'+id).focus();
+  reorderRows();
+}
+
+function delRow(id){
+  const tr=document.getElementById('row-'+id);
+  if(tr)tr.remove();
+  reorderRows();
+}
+
+function reorderRows(){
+  document.querySelectorAll('#items-tbody tr').forEach((tr,i)=>{
+    const num=tr.querySelector('.row-num');
+    if(num)num.textContent=i+1;
+  });
+}
+
+// ── 폼 제출 ──
+function submitForm(){
+  const required=[['f-dept','부서'],['f-process','공정'],['f-location','사용처'],['f-requester','청구자'],['f-date','청구일']];
+  for(const [id,label] of required){
+    if(!document.getElementById(id).value){showToast(`${label}을(를) 입력해주세요`);document.getElementById(id).focus();return;}
+  }
+  const rows=document.querySelectorAll('#items-tbody tr');
+  if(rows.length===0){showToast('품목을 1개 이상 추가해주세요');return;}
+  let valid=true;
+  rows.forEach(tr=>{
+    const id=tr.id.replace('row-','');
+    if(!document.getElementById('item-'+id)?.value||!document.getElementById('qty-'+id)?.value){valid=false;}
+  });
+  if(!valid){showToast('품명과 수량은 필수입니다');return;}
+  showToast(`✓ ${rows.length}개 품목이 등록되었습니다`);
+  setTimeout(()=>{showPage('list',document.querySelectorAll('.nav-item')[1]);},1000);
+}
+
+function resetAll(){
+  ['f-dept','f-process','f-location','f-requester'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('items-tbody').innerHTML='';
+  rowCount=0;
+  addRow();
+}
+
+// ── 인쇄 ──
+function printReceipt(){
+  document.getElementById('print-tbody').innerHTML=document.getElementById('receipt-tbody').innerHTML;
+  window.print();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// 초기화
+document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+addRow();
+addRow();
+addRow();
+updateDashboard();
+</script>
+</body>
+</html>
