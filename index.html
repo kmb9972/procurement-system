@@ -135,8 +135,8 @@ tr:hover td{background:var(--surface2)}
 
 /* 물품청구서 */
 .receipt-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:32px;box-shadow:var(--shadow);max-width:860px}
-.receipt-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
-.receipt-title{font-size:24px;font-weight:700;letter-spacing:.06em}
+.receipt-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;position:relative}
+.receipt-title{font-size:24px;font-weight:700;letter-spacing:.06em;text-align:center}
 .receipt-dept{font-size:13px;color:var(--text2);margin-top:4px}
 .approval-box{border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden}
 .approval-label{background:var(--surface2);padding:4px 24px;font-size:11px;font-weight:600;text-align:center;border-bottom:1px solid var(--border)}
@@ -156,6 +156,7 @@ tr:hover td{background:var(--surface2)}
   #print-estimate{display:none!important}
   body.print-receipt #print-area{display:block!important}
   body.print-estimate #print-estimate{display:block!important}
+  body.print-estimate #print-estimate .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:20px!important}
   .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:20px!important}
 }
 #print-area{display:none}
@@ -173,7 +174,7 @@ tr:hover td{background:var(--surface2)}
   <div id="print-estimate" style="display:none"></div>
   <div class="receipt-card" style="max-width:100%;box-shadow:none;border:none">
     <div class="receipt-top" style="display:grid;grid-template-columns:1fr auto;align-items:start;margin-bottom:24px">
-      <div><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
+      <div style="flex:1;text-align:center"><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
       <div class="approval-box">
         <div class="approval-label">결 재</div>
         <div style="display:flex"><div style="border-right:1px solid var(--border);padding:4px 10px;font-size:11px;text-align:center;background:var(--surface2)">팀장</div><div class="approval-sign"></div></div>
@@ -381,7 +382,7 @@ tr:hover td{background:var(--surface2)}
   </div>
   <div class="receipt-card">
     <div class="receipt-top">
-      <div><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
+      <div style="flex:1;text-align:center"><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
       <div class="approval-box">
         <div class="approval-label">결 재</div>
         <div style="display:flex"><div style="border-right:1px solid var(--border);padding:4px 10px;font-size:11px;text-align:center;background:var(--surface2)">팀장</div><div class="approval-sign"></div></div>
