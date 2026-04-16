@@ -485,20 +485,11 @@ async function updateDashboard(){
   }
 }
 
-// ── 탭 ──
-let currentDept='전체', currentStatus='전체', pendDept='전체';
-
-function setDeptTab(dept,el,page){
-  el.closest('.dept-tabs').querySelectorAll('.dept-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  if(page==='list'){currentDept=dept;filterList(true);}
-  else{pendDept=dept;filterPending();}
-}
 function setStatusFilter(s,el){
   currentStatus=s;
   document.querySelectorAll('#page-list .filter-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  filterList();
+  filterList(true);
 }
 
 // ── 청구 내역 조회 ──
