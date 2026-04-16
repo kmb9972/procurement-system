@@ -260,7 +260,7 @@ tr:hover td{background:var(--surface2)}
       </div>
     </div>
     <div style="overflow-x:auto">
-      <table><thead><tr><th style="width:32px">출력</th><th>부서</th><th>날짜</th><th>공정</th><th>청구자</th><th>품명</th><th>규격</th><th>수량</th><th>단위</th><th>구입처</th><th>진행상태</th></tr></thead>
+      <table><thead><tr><th style="width:32px">출력</th><th>부서</th><th>날짜</th><th>공정</th><th>청구자</th><th>품명</th><th>규격</th><th>수량</th><th>단위</th><th>단가</th><th>금액</th><th>구입처</th><th>진행상태</th><th>링크</th></tr></thead>
       <tbody id="list-tbody"><tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><div>구글 시트 연동 후 데이터가 표시됩니다</div></div></td></tr></tbody></table>
     </div>
   </div>
@@ -380,7 +380,7 @@ tr:hover td{background:var(--surface2)}
       </div>
     </div>
     <table class="receipt-table">
-      <thead><tr><th style="width:36px">번호</th><th>날짜</th><th>청구자</th><th>품명</th><th>품번/규격</th><th style="width:50px">수량</th><th style="width:50px">단위</th><th>용도</th><th>구입처</th></tr></thead>
+      <thead><tr><th style="width:36px">번호</th><th>날짜</th><th>청구자</th><th>품명</th><th>품번/규격</th><th style="width:50px">수량</th><th style="width:50px">단위</th><th>용도</th><th>구입처</th><th style="width:32px"></th></tr></thead>
       <tbody id="receipt-tbody"><tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📄</div><div>청구 내역에서 ✓ 체크 후 이 화면에서 확인하세요</div></div></td></tr></tbody>
     </table>
     <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><div class="receipt-total-box">합계 수량 : — 건</div></div>
@@ -576,6 +576,15 @@ function renderListTable(data){
           ${['EA','롤','박스','미터','식'].map(u=>`<option ${r.unit===u?'selected':''}>${u}</option>`).join('')}
         </select>
       </td>
+      <td style="width:80px">
+        <input type="number" value="${r.price||''}" placeholder="0"
+          style="width:72px;text-align:right;border:1px solid transparent;border-radius:4px;padding:4px 5px;font-size:12px;font-family:inherit;background:transparent"
+          onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='transparent'"
+          onblur="updateField('${r.dept}',${r.num},'price',this.value)" id="price-${r.dept}-${r.num}">
+      </td>
+      <td style="width:80px;font-size:12px;text-align:right;color:var(--text2);font-family:var(--font-mono)" id="amount-${r.dept}-${r.num}">
+        ${r.price&&r.qty ? (Number(r.price)*Number(r.qty)).toLocaleString() : ''}
+      </td>
       <td>
         <input value="${r.supplier||''}" placeholder="구입처 입력"
           style="width:100%;border:1px solid transparent;border-radius:4px;padding:4px 6px;font-size:12px;font-family:inherit;background:transparent"
@@ -587,6 +596,9 @@ function renderListTable(data){
           onchange="updateStatus('${r.dept}',${r.num},this.value,this)">
           ${statusOpts}
         </select>
+      </td>
+      <td style="text-align:center">
+        ${r.link ? `<a href="${r.link}" target="_blank" style="font-size:11px;color:var(--blue-mid);padding:3px 8px;border:1px solid var(--blue-mid);border-radius:4px;text-decoration:none">링크</a>` : ''}
       </td>
     </tr>`;
   }).join('');
@@ -601,17 +613,28 @@ function toggleCheck(el,dept,num,date,requester,item,spec,qty,unit,purpose,suppl
   }
 }
 
-// 필드 업데이트 (수량/단위/구입처)
+// 필드 업데이트 (수량/단위/구입처/단가)
 async function updateField(dept, num, field, value){
   try {
     const payload = {action:'updateStatus', dept, num};
-    if(field==='qty') payload.qty = value;
-    else if(field==='unit') payload.unit = value;
-    else if(field==='supplier') payload.supplier = value;
+    if(field==='qty') { payload.qty=value; updateAmount(dept,num); }
+    else if(field==='unit') payload.unit=value;
+    else if(field==='supplier') payload.supplier=value;
+    else if(field==='price') { payload.price=value; updateAmount(dept,num); }
     const result = await apiPost(payload);
     if(result.error) throw new Error(result.error);
     showToast('✓ 저장됨');
   } catch(err) { showToast('저장 실패: '+err.message); }
+}
+
+function updateAmount(dept, num){
+  const priceEl=document.getElementById(`price-${dept}-${num}`);
+  const amountEl=document.getElementById(`amount-${dept}-${num}`);
+  const qtyEl=document.querySelector(`#tr-${dept}-${num} input[type=number]`);
+  if(!priceEl||!amountEl) return;
+  const price=Number(priceEl.value)||0;
+  const qty=Number(qtyEl?.value)||0;
+  amountEl.textContent=price&&qty?(price*qty).toLocaleString():'';
 }
 
 // 진행상태 업데이트
@@ -644,6 +667,10 @@ function updateReceipt(){
     <td style="text-align:center">${r.unit||''}</td>
     <td>${r.purpose||''}</td>
     <td>${r.supplier||''}</td>
+    <td style="text-align:center">
+      <button onclick="removeFromReceipt('${r.dept}',${r.num})"
+        style="width:22px;height:22px;border-radius:50%;border:1px solid var(--red-mid);background:transparent;color:var(--red-mid);cursor:pointer;font-size:13px;line-height:1">×</button>
+    </td>
   </tr>`).join('');
   document.querySelector('.receipt-total-box').textContent=`합계 수량 : ${checkedItems.length} 건`;
 }
@@ -767,6 +794,15 @@ function resetAll(){
   addRow();
 }
 
+// ── 물품청구서 항목 제거 ──
+function removeFromReceipt(dept, num){
+  checkedItems=checkedItems.filter(c=>!(c.dept===dept&&c.num==num));
+  // 체크박스도 해제
+  const tr=document.getElementById(`tr-${dept}-${num}`);
+  if(tr){ const cb=tr.querySelector('input[type=checkbox]'); if(cb) cb.checked=false; }
+  updateReceipt();
+}
+
 // ── 인쇄 ──
 function printReceipt(){
   document.getElementById('print-tbody').innerHTML=document.getElementById('receipt-tbody').innerHTML;
@@ -781,8 +817,6 @@ function showToast(msg){
 
 // 초기화
 document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-addRow();
-addRow();
 addRow();
 updateDashboard();
 </script>
