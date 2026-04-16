@@ -149,6 +149,7 @@ tr:hover td{background:var(--surface2)}
 .print-hint{font-size:12px;color:var(--text3);text-align:center;margin-top:12px}
 
 @media print{
+  #print-estimate { display:block !important; }
   .sidebar,.page-header,.dept-tabs,.print-hint,.btn,.items-header,.form-actions{display:none!important}
   .main,.layout,body{display:block!important;background:#fff!important}
   .page{display:none!important;padding:0!important}
@@ -166,6 +167,7 @@ tr:hover td{background:var(--surface2)}
 <body>
 
 <div id="print-area">
+  <div id="print-estimate" style="display:none"></div>
   <div class="receipt-card" style="max-width:100%;box-shadow:none;border:none">
     <div class="receipt-top">
       <div><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
@@ -199,6 +201,9 @@ tr:hover td{background:var(--surface2)}
     </div>
     <div class="nav-item" onclick="showPage('receipt',this)">
       <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 17H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"/><path d="M9 9h6M9 13h4"/></svg>물품청구서 출력
+    </div>
+    <div class="nav-item" onclick="showPage('estimate',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12h6M9 16h4"/></svg>견적의뢰서 출력
     </div>
   </nav>
 </aside>
@@ -388,6 +393,54 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
+<!-- 견적의뢰서 출력 -->
+<div class="page" id="page-estimate">
+  <div class="page-header">
+    <div><div class="page-title">견적의뢰서 출력</div><div class="page-sub">체크된 항목을 수정 후 출력하세요</div></div>
+    <button class="btn btn-primary" onclick="printEstimate()">🖨 인쇄</button>
+  </div>
+  <div class="receipt-card" id="estimate-area" style="max-width:900px">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:22px;font-weight:700;letter-spacing:.1em;margin-bottom:16px">견  적  의  뢰  서</div>
+      <div style="display:flex;justify-content:flex-end">
+        <table style="border-collapse:collapse;font-size:13px;text-align:left">
+          <tr><td style="padding:3px 12px;border:1px solid var(--border2);background:var(--surface2);font-weight:500">상호</td><td style="padding:3px 16px;border:1px solid var(--border2)">주식회사 미래엔</td></tr>
+          <tr><td style="padding:3px 12px;border:1px solid var(--border2);background:var(--surface2);font-weight:500">주소</td><td style="padding:3px 16px;border:1px solid var(--border2)">세종특별자치시 연동면 청연로 492-14</td></tr>
+          <tr><td style="padding:3px 12px;border:1px solid var(--border2);background:var(--surface2);font-weight:500">대표이사</td><td style="padding:3px 16px;border:1px solid var(--border2)">신 광 수 (직인)</td></tr>
+          <tr><td style="padding:3px 12px;border:1px solid var(--border2);background:var(--surface2);font-weight:500">담당</td><td style="padding:3px 16px;border:1px solid var(--border2)">친환경기술지원팀 강민범 선임</td></tr>
+          <tr><td style="padding:3px 12px;border:1px solid var(--border2);background:var(--surface2);font-weight:500">연락처</td><td style="padding:3px 16px;border:1px solid var(--border2)">T 044-861-3132 / E mbkang@mirae-n.com</td></tr>
+        </table>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px">의뢰일자 : <strong id="estimate-date"></strong></div>
+      <div style="font-size:13px;color:var(--text2)">■ 아래 품목에 대하여 견적 의뢰드립니다.</div>
+    </div>
+    <table class="receipt-table" style="margin-bottom:12px">
+      <thead>
+        <tr>
+          <th style="width:36px">NO</th>
+          <th>품목</th>
+          <th>품번</th>
+          <th>제조사</th>
+          <th style="width:60px">단위</th>
+          <th style="width:60px">수량</th>
+          <th>비고</th>
+          <th style="width:32px"></th>
+        </tr>
+      </thead>
+      <tbody id="estimate-tbody">
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><div>청구 내역에서 체크 후 이 화면에서 확인하세요</div></div></td></tr>
+      </tbody>
+    </table>
+    <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 16px;min-height:60px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">[ REMARK ]</div>
+      <textarea id="estimate-remark" style="width:100%;border:none;outline:none;font-size:13px;font-family:inherit;resize:vertical;min-height:40px;background:transparent" placeholder="특이사항 입력..."></textarea>
+    </div>
+    <div class="print-hint" style="margin-top:12px">※ 인쇄 버튼을 클릭하면 견적의뢰서만 출력됩니다</div>
+  </div>
+</div>
+
 </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -434,6 +487,7 @@ function showPage(id,el){
   if(id==='list')filterList(true);
   if(id==='pending')filterPending();
   if(id==='receipt')updateReceipt();
+  if(id==='estimate')updateEstimate();
 }
 
 // ── 탭 ──
@@ -815,6 +869,51 @@ function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── 견적의뢰서 업데이트 ──
+function updateEstimate(){
+  document.getElementById('estimate-date').textContent = new Date().toLocaleDateString('ko-KR');
+  if(!checkedItems.length){
+    document.getElementById('estimate-tbody').innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><div>청구 내역에서 체크 후 이 화면에서 확인하세요</div></div></td></tr>';
+    return;
+  }
+  document.getElementById('estimate-tbody').innerHTML=checkedItems.map((r,i)=>`<tr id="est-row-${i}">
+    <td style="text-align:center">${i+1}</td>
+    <td><input value="${r.item||''}" style="width:100%;border:none;border-bottom:1px solid var(--border2);padding:4px;font-size:13px;font-family:inherit;background:transparent" placeholder="품목명"></td>
+    <td><input value="${r.spec||''}" style="width:100%;border:none;border-bottom:1px solid var(--border2);padding:4px;font-size:12px;font-family:inherit;background:transparent" placeholder="품번"></td>
+    <td><input value="" style="width:100%;border:none;border-bottom:1px solid var(--border2);padding:4px;font-size:12px;font-family:inherit;background:transparent" placeholder="제조사"></td>
+    <td><input value="${r.unit||''}" style="width:52px;border:none;border-bottom:1px solid var(--border2);padding:4px;font-size:12px;font-family:inherit;background:transparent;text-align:center" placeholder="단위"></td>
+    <td><input type="number" value="${r.qty||''}" style="width:52px;border:none;border-bottom:1px solid var(--border2);padding:4px;font-size:12px;font-family:inherit;background:transparent;text-align:center" placeholder="수량"></td>
+    <td><input value="" style="width:100%;border:none;border-bottom:1px solid var(--border2);padding:4px;font-size:12px;font-family:inherit;background:transparent" placeholder="비고"></td>
+    <td style="text-align:center">
+      <button onclick="removeFromEstimate(${i})"
+        style="width:22px;height:22px;border-radius:50%;border:1px solid var(--red-mid);background:transparent;color:var(--red-mid);cursor:pointer;font-size:13px;line-height:1">×</button>
+    </td>
+  </tr>`).join('');
+}
+
+function removeFromEstimate(idx){
+  checkedItems.splice(idx,1);
+  updateEstimate();
+}
+
+function printEstimate(){
+  const area = document.getElementById('estimate-area');
+  const printDiv = document.getElementById('print-estimate');
+  printDiv.innerHTML = area.innerHTML;
+  printDiv.style.display = 'block';
+  // 버튼, X, textarea → 일반 텍스트로
+  printDiv.querySelectorAll('button').forEach(b=>b.remove());
+  printDiv.querySelectorAll('.print-hint').forEach(b=>b.remove());
+  printDiv.querySelectorAll('textarea').forEach(t=>{
+    const p=document.createElement('p');
+    p.textContent=t.value;
+    p.style.cssText=t.style.cssText;
+    t.replaceWith(p);
+  });
+  window.print();
+  setTimeout(()=>{ printDiv.style.display='none'; printDiv.innerHTML=''; }, 1000);
 }
 
 // 초기화
