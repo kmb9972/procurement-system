@@ -508,6 +508,22 @@ async function filterList(yearOnly=false){
 
 const STATUS_OPTIONS = ['견적 문의 중','기안 진행 중','발주 전','발주 완료','입고 완료','수리 진행 중','수리 완료','긴급요청'];
 
+// 상태값 정규화 (띄어쓰기 통일)
+function normalizeStatus(s){
+  if(!s) return '';
+  const map = {
+    '입고완료':'입고 완료', '수리완료':'수리 완료',
+    '발주완료':'발주 완료', '기안진행중':'기안 진행 중',
+    '견적의뢰중':'견적 문의 중', '견적문의중':'견적 문의 중',
+    '수리진행중':'수리 진행 중', '택배발송':'발주 완료',
+    '주문완료':'발주 완료', '점검완료':'수리 완료',
+    '긴급':'긴급요청', '긴급 입고요망':'긴급요청',
+    '문의중':'견적 문의 중', '발주완료 / 45일 소요':'발주 완료',
+    '견적 문의중':'견적 문의 중',
+  };
+  return map[s.trim()] || s.trim();
+}
+
 let checkedItems = [];
 
 function getStatusClass(s){
@@ -529,8 +545,9 @@ function renderListTable(data){
   }
   document.getElementById('list-count').textContent=`${filtered.length} 건`;
   document.getElementById('list-tbody').innerHTML=filtered.map((r,i)=>{
-    const sc=getStatusClass(String(r.status||'').trim());
-    const statusOpts=STATUS_OPTIONS.map(o=>`<option value="${o}" ${r.status===o?'selected':''}>${o}</option>`).join('');
+    const normStatus = normalizeStatus(r.status);
+    const sc=getStatusClass(normStatus);
+    const statusOpts=STATUS_OPTIONS.map(o=>`<option value="${o}" ${normStatus===o?'selected':''}>${o}</option>`).join('');
     const isChecked = checkedItems.some(c=>c.dept===r.dept&&c.num===r.num);
     return `<tr id="tr-${r.dept}-${r.num}" ${r.status==='긴급요청'?'style="background:#FCE4EC"':''}>
       <td style="text-align:center">
