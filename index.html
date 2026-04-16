@@ -549,7 +549,12 @@ function renderListTable(data){
     const sc=getStatusClass(normStatus);
     const statusOpts=STATUS_OPTIONS.map(o=>`<option value="${o}" ${normStatus===o?'selected':''}>${o}</option>`).join('');
     const isChecked = checkedItems.some(c=>c.dept===r.dept&&c.num===r.num);
-    return `<tr id="tr-${r.dept}-${r.num}" ${normStatus==='긴급요청'?'style="background:#FCE4EC"':''}>
+    const rowBg = normStatus==='긴급요청' ? '#FCE4EC' :
+                  (normStatus==='입고 완료'||normStatus==='수리 완료') ? '#E2EFDA' :
+                  normStatus==='발주 완료' ? '#E6F1FB' :
+                  normStatus==='수리 진행 중' ? '#EEEDFE' :
+                  normStatus==='기안 진행 중' ? '#FFF2CC' : '';
+    return `<tr id="tr-${r.dept}-${r.num}" style="background:${rowBg}">
       <td style="text-align:center">
         <input type="checkbox" ${isChecked?'checked':''} onchange="toggleCheck(this,'${r.dept}',${r.num},'${r.date}','${r.requester}','${r.item}','${r.spec}',${r.qty},'${r.unit}','${r.purpose}','${r.supplier}')">
       </td>
