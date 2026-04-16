@@ -394,7 +394,7 @@ tr:hover td{background:var(--surface2)}
 
 <script>
 // ── API 설정 ──
-const API_URL = 'https://script.google.com/macros/s/AKfycbyyRMsBDX2TsZ4EnRJ2XAaymW04mIPlUQ_bDZ9MLofvnZa9NX4gp3UXGBSyeWuuALs/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbw8ToyN-lntvS-N-QXmqnrSP-YKfDfeielKDKsyFxcM02_FUrPfNGEUV_2AML0ws-4S/exec';
 
 function apiGet(params) {
   return new Promise((resolve, reject) => {
@@ -549,7 +549,7 @@ function renderListTable(data){
     const sc=getStatusClass(normStatus);
     const statusOpts=STATUS_OPTIONS.map(o=>`<option value="${o}" ${normStatus===o?'selected':''}>${o}</option>`).join('');
     const isChecked = checkedItems.some(c=>c.dept===r.dept&&c.num===r.num);
-    return `<tr id="tr-${r.dept}-${r.num}" ${r.status==='긴급요청'?'style="background:#FCE4EC"':''}>
+    return `<tr id="tr-${r.dept}-${r.num}" ${normStatus==='긴급요청'?'style="background:#FCE4EC"':''}>
       <td style="text-align:center">
         <input type="checkbox" ${isChecked?'checked':''} onchange="toggleCheck(this,'${r.dept}',${r.num},'${r.date}','${r.requester}','${r.item}','${r.spec}',${r.qty},'${r.unit}','${r.purpose}','${r.supplier}')">
       </td>
@@ -557,9 +557,26 @@ function renderListTable(data){
       <td>${r.date||''}</td><td>${r.process||''}</td><td>${r.requester||''}</td>
       <td>${r.item||''}</td>
       <td style="font-size:12px;color:var(--text2)">${r.spec||''}</td>
-      <td style="text-align:center">${r.qty||''}</td>
-      <td style="text-align:center">${r.unit||''}</td>
-      <td>${r.supplier||''}</td>
+      <td style="text-align:center;width:60px">
+        <input type="number" value="${r.qty||''}" min="1"
+          style="width:52px;text-align:right;border:1px solid transparent;border-radius:4px;padding:4px 5px;font-size:12px;font-family:inherit;background:transparent"
+          onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='transparent'"
+          onchange="updateField('${r.dept}',${r.num},'qty',this.value)">
+      </td>
+      <td style="text-align:center;width:70px">
+        <select style="border:1px solid transparent;border-radius:4px;padding:4px 4px;font-size:12px;font-family:inherit;background:transparent;cursor:pointer"
+          onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='transparent'"
+          onchange="updateField('${r.dept}',${r.num},'unit',this.value)">
+          <option value="">-</option>
+          ${['EA','롤','박스','미터','식'].map(u=>`<option ${r.unit===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <input value="${r.supplier||''}" placeholder="구입처 입력"
+          style="width:100%;border:1px solid transparent;border-radius:4px;padding:4px 6px;font-size:12px;font-family:inherit;background:transparent"
+          onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='transparent'"
+          onblur="updateField('${r.dept}',${r.num},'supplier',this.value)">
+      </td>
       <td>
         <select class="cell-select" style="border:1px solid var(--border2);border-radius:var(--radius-sm);padding:4px 6px;font-size:12px;background:transparent"
           onchange="updateStatus('${r.dept}',${r.num},this.value,this)">
@@ -577,6 +594,19 @@ function toggleCheck(el,dept,num,date,requester,item,spec,qty,unit,purpose,suppl
   } else {
     checkedItems=checkedItems.filter(c=>!(c.dept===dept&&c.num===num));
   }
+}
+
+// 필드 업데이트 (수량/단위/구입처)
+async function updateField(dept, num, field, value){
+  try {
+    const payload = {action:'updateStatus', dept, num};
+    if(field==='qty') payload.qty = value;
+    else if(field==='unit') payload.unit = value;
+    else if(field==='supplier') payload.supplier = value;
+    const result = await apiPost(payload);
+    if(result.error) throw new Error(result.error);
+    showToast('✓ 저장됨');
+  } catch(err) { showToast('저장 실패: '+err.message); }
 }
 
 // 진행상태 업데이트
