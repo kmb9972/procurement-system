@@ -539,7 +539,7 @@ async function updateDashboard(){
       document.getElementById('dn-'+dept).textContent=dd.total;
       document.getElementById('sub-'+dept).textContent=`미입고 ${dd.pending}건 · 완료 ${dd.done+dd.repair}건`;
       const vals=[dd.pending,dd.done,dd.repair].filter(v=>v>0);
-      const labels=['미입고','입고완료','수리완료'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
+      const labels=['미입고','입고완료','수리진행중'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
       const colors=['#BA7517','#639922','#7F77DD'].filter((_,i)=>[dd.pending,dd.done,dd.repair][i]>0);
       if(donutCharts[dept])donutCharts[dept].destroy();
       donutCharts[dept]=new Chart(document.getElementById('donut-'+dept),{type:'doughnut',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed}건`}}}}});
