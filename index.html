@@ -226,8 +226,8 @@ tr:hover td{background:var(--surface2)}
   <div class="page-header">
     <div><div class="page-title">현황판</div><div class="page-sub">부서별 청구 현황을 한눈에 확인하세요</div></div>
     <div class="period-bar">
-      <select id="sel-year" onchange="updateDashboard()"><option>2026</option><option>2025</option></select>
-      <select id="sel-month" onchange="updateDashboard()"><option value="4">4월</option><option value="3">3월</option><option value="2">2월</option><option value="1">1월</option></select>
+      <select id="sel-year" onchange="updateDashboard()"></select>
+      <select id="sel-month" onchange="updateDashboard()"></select>
       <button class="btn btn-primary" onclick="printDashboard()">🖨 현황 출력</button>
     </div>
   </div>
@@ -256,8 +256,8 @@ tr:hover td{background:var(--surface2)}
   <div class="page-header">
     <div><div class="page-title">청구 내역</div><div class="page-sub">부서별 물품 청구 내역을 조회합니다</div></div>
     <div class="period-bar">
-      <select id="list-year"><option>2026</option><option>2025</option></select>
-      <select id="list-month"><option value="4">4월</option><option value="3">3월</option><option value="2">2월</option><option value="1">1월</option></select>
+      <select id="list-year"></select>
+      <select id="list-month"><option value="">전체</option></select>
       <button class="btn btn-primary" onclick="filterList()">조회</button>
     </div>
   </div>
@@ -288,8 +288,8 @@ tr:hover td{background:var(--surface2)}
   <div class="page-header">
     <div><div class="page-title">미입고 현황</div><div class="page-sub">입고 완료되지 않은 품목만 모아서 확인합니다</div></div>
     <div class="period-bar">
-      <select><option>2026</option><option>2025</option></select>
-      <select><option value="4">4월</option><option value="3">3월</option><option value="2">2월</option><option value="1">1월</option></select>
+      <select id="pend-year"></select>
+      <select id="pend-month"><option value="">전체</option></select>
     </div>
   </div>
   <div class="table-card">
@@ -979,8 +979,37 @@ function printEstimate(){
   }, 1000);
 }
 
+// ── 년도/월 select 동적 생성 ──
+function buildPeriodSelects(){
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1;
+
+  // 년도: 작년~올해
+  const years = [curYear, curYear - 1];
+
+  // 현황판
+  const selYear = document.getElementById('sel-year');
+  const selMonth = document.getElementById('sel-month');
+  years.forEach(y => { const o=document.createElement('option'); o.value=y; o.textContent=y; selYear.appendChild(o); });
+  for(let m = curMonth; m >= 1; m--){ const o=document.createElement('option'); o.value=m; o.textContent=m+'월'; selMonth.appendChild(o); }
+
+  // 청구 내역
+  const listYear = document.getElementById('list-year');
+  const listMonth = document.getElementById('list-month');
+  years.forEach(y => { const o=document.createElement('option'); o.value=y; o.textContent=y; listYear.appendChild(o); });
+  for(let m = curMonth; m >= 1; m--){ const o=document.createElement('option'); o.value=m; o.textContent=m+'월'; listMonth.appendChild(o); }
+
+  // 미입고
+  const pendYear = document.getElementById('pend-year');
+  const pendMonth = document.getElementById('pend-month');
+  if(pendYear){ years.forEach(y => { const o=document.createElement('option'); o.value=y; o.textContent=y; pendYear.appendChild(o); }); }
+  if(pendMonth){ for(let m = curMonth; m >= 1; m--){ const o=document.createElement('option'); o.value=m; o.textContent=m+'월'; pendMonth.appendChild(o); } }
+}
+
 // 초기화
 document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+buildPeriodSelects();
 addRow();
 updateDashboard();
 </script>
