@@ -155,13 +155,8 @@ tr:hover td{background:var(--surface2)}
   .page{display:none!important;padding:0!important}
   #print-area{display:none!important}
   #print-estimate{display:none!important}
-  #print-dashboard{display:none!important}
   body.print-receipt #print-area{display:block!important}
   body.print-estimate #print-estimate{display:block!important}
-  body.print-dashboard #print-dashboard{display:block!important}
-  body.print-dashboard #print-dashboard .metric-card{border:1px solid #c5d8ff!important;box-shadow:none!important}
-  body.print-dashboard #print-dashboard .chart-card{border:1px solid #c5d8ff!important;box-shadow:none!important}
-  body.print-dashboard #print-dashboard .bar-card{border:1px solid #c5d8ff!important;box-shadow:none!important}
   .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:20px!important}
 }
 
@@ -870,8 +865,6 @@ function removeFromReceipt(dept, num){
 }
 
 // ── 인쇄 ──
-
-
 function printReceipt(){
   document.getElementById('print-tbody').innerHTML=document.getElementById('receipt-tbody').innerHTML;
   document.body.classList.add('print-receipt');
