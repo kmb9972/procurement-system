@@ -6,6 +6,7 @@
 <title>종합안전센터 물품 청구 시스템</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
   --bg:#f0f5ff;--surface:#fff;--surface2:#eef4ff;--border:#c5d8ff;--border2:#a8c4f8;
@@ -872,37 +873,66 @@ function removeFromReceipt(dept, num){
 }
 
 // ── 인쇄 ──
-function printDashboard(){
+async function printDashboard(){
   const year = document.getElementById('sel-year').value;
   const month = document.getElementById('sel-month').value;
-  const dash = document.getElementById('print-dashboard');
 
-  // 현황판 내용 복사
-  const metrics = document.querySelector('.metrics').outerHTML;
-  const chartGrid = document.querySelector('.chart-grid').outerHTML;
-  const barCard = document.querySelector('.bar-card').outerHTML;
+  // 캡처할 영역 (현황판 페이지)
+  const target = document.getElementById('page-dashboard');
 
-  dash.innerHTML = `
-    <div style="padding:24px;font-family:'Noto Sans KR',sans-serif;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:3px solid #2351c5;">
-        <div>
-          <div style="font-size:20px;font-weight:900;color:#0d1f4e;font-family:'Montserrat',sans-serif;">물품 청구 현황판</div>
-          <div style="font-size:12px;color:#6b7a99;margin-top:4px">종합안전센터 · ${year}년 ${month}월</div>
+  showToast('캡처 중...');
+
+  try {
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#f0f5ff',
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+
+    // 인쇄용 창 열기
+    const printWin = window.open('', '_blank');
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>물품 청구 현황판 - ${year}년 ${month}월</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { background: #fff; }
+          .header { padding: 16px 20px; border-bottom: 3px solid #2351c5; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+          .header-title { font-size: 18px; font-weight: 900; color: #0d1f4e; font-family: sans-serif; }
+          .header-sub { font-size: 12px; color: #6b7a99; margin-top: 4px; }
+          .header-date { font-size: 12px; color: #6b7a99; }
+          img { width: 100%; height: auto; display: block; }
+          @media print { @page { margin: 10mm; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="header-title">물품 청구 현황판</div>
+            <div class="header-sub">종합안전센터 · ${year}년 ${month}월</div>
+          </div>
+          <div class="header-date">출력일 : ${new Date().toLocaleDateString('ko-KR')}</div>
         </div>
-        <div style="font-size:12px;color:#6b7a99;">출력일 : ${new Date().toLocaleDateString('ko-KR')}</div>
-      </div>
-      ${metrics}
-      ${chartGrid}
-      ${barCard}
-    </div>`;
-
-  document.body.classList.add('print-dashboard');
-  document.body.classList.remove('print-receipt','print-estimate');
-  window.print();
-  setTimeout(()=>{
-    document.body.classList.remove('print-dashboard');
-    dash.innerHTML='';
-  }, 1000);
+        <img src="${imgData}">
+        <script>
+          window.onload = function() {
+            setTimeout(function() { window.print(); window.close(); }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+    showToast('✓ 인쇄 준비 완료');
+  } catch(err) {
+    showToast('캡처 실패: ' + err.message);
+  }
 }
 
 function printReceipt(){
