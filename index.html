@@ -277,7 +277,7 @@ tr:hover td{background:var(--surface2)}
       </div>
     </div>
     <div style="overflow-x:auto">
-      <table><thead><tr><th style="width:32px">출력</th><th>부서</th><th>날짜</th><th>공정</th><th>청구자</th><th>품명</th><th>규격</th><th>수량</th><th>단위</th><th>단가</th><th>금액</th><th>구입처</th><th>진행상태</th><th>링크</th></tr></thead>
+      <table><thead><tr><th style="width:32px">출력</th><th>부서</th><th>날짜</th><th>공정</th><th>청구자</th><th>품명</th><th>규격</th><th>수량</th><th>단위</th><th>단가</th><th>금액</th><th>구입처</th><th>진행상태</th><th>링크/비고</th></tr></thead>
       <tbody id="list-tbody"><tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><div>구글 시트 연동 후 데이터가 표시됩니다</div></div></td></tr></tbody></table>
     </div>
   </div>
@@ -364,7 +364,7 @@ tr:hover td{background:var(--surface2)}
             <th style="min-width:180px">용도</th>
             <th style="width:70px">수량 *</th>
             <th style="width:80px">단위</th>
-            <th style="min-width:160px">구매링크</th>
+            <th style="min-width:160px">링크/비고</th>
             <th style="width:32px"></th>
           </tr>
         </thead>
@@ -789,7 +789,7 @@ function addRow(){
         <option>EA</option><option>롤</option><option>박스</option><option>미터</option><option>식</option>
       </select>
     </td>
-    <td><input class="cell-input" placeholder="https://..." id="link-${id}"></td>
+    <td><input class="cell-input" placeholder="링크 또는 메모" id="link-${id}"></td>
     <td><button class="del-btn" onclick="delRow(${id})" title="삭제">×</button></td>
   `;
   document.getElementById('items-tbody').appendChild(tr);
