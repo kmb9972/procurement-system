@@ -94,6 +94,7 @@ tr:hover td{background:var(--surface2)}
 .s-pending{background:var(--amber-bg);color:var(--amber)}
 .s-repair{background:var(--purple-bg);color:#534AB7}
 .s-urgent{background:var(--red-bg);color:var(--red)}
+.s-cancel{background:#D3D1C7;color:#444441}
 
 /* ── 청구 등록 폼 ── */
 .form-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
@@ -565,7 +566,7 @@ async function filterList(yearOnly=false){
   } catch(err) { showToast('조회 실패: '+err.message); }
 }
 
-const STATUS_OPTIONS = ['견적 문의 중','기안 진행 중','발주 전','발주 완료','입고 완료','수리 진행 중','수리 완료','긴급요청'];
+const STATUS_OPTIONS = ['견적 문의 중','기안 진행 중','발주 전','발주 완료','입고 완료','수리 진행 중','수리 완료','긴급요청','신청취소'];
 
 // 상태값 정규화 (띄어쓰기 통일)
 function normalizeStatus(s){
@@ -576,7 +577,7 @@ function normalizeStatus(s){
     '견적의뢰중':'견적 문의 중', '견적문의중':'견적 문의 중',
     '수리진행중':'수리 진행 중', '택배발송':'발주 완료',
     '주문완료':'발주 완료', '점검완료':'수리 완료',
-    '긴급':'긴급요청', '긴급 입고요망':'긴급요청',
+    '긴급':'긴급요청', '긴급 입고요망':'긴급요청', '신청취소':'신청취소',
     '문의중':'견적 문의 중', '발주완료 / 45일 소요':'발주 완료',
     '견적 문의중':'견적 문의 중',
   };
@@ -587,6 +588,7 @@ let checkedItems = [];
 
 function getStatusClass(s){
   if(!s) return 's-pending';
+  if(s.includes('신청취소')) return 's-cancel';
   if(s.includes('완료')) return 's-done';
   if(s.includes('수리')) return 's-repair';
   if(s.includes('긴급')) return 's-urgent';
@@ -595,7 +597,7 @@ function getStatusClass(s){
 
 function renderListTable(data){
   let filtered=data;
-  if(currentStatus==='미입고') filtered=data.filter(r=>!['입고 완료','입고완료','수리 완료','수리완료'].includes(String(r.status||'').trim()));
+  if(currentStatus==='미입고') filtered=data.filter(r=>!['입고 완료','입고완료','수리 완료','수리완료','신청취소'].includes(String(r.status||'').trim()));
   else if(currentStatus==='완료') filtered=data.filter(r=>['입고 완료','입고완료','수리 완료','수리완료'].includes(String(r.status||'').trim()));
   if(!filtered.length){
     document.getElementById('list-tbody').innerHTML='<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">📋</div><div>데이터가 없습니다</div></div></td></tr>';
@@ -608,12 +610,13 @@ function renderListTable(data){
     const sc=getStatusClass(normStatus);
     const statusOpts=STATUS_OPTIONS.map(o=>`<option value="${o}" ${normStatus===o?'selected':''}>${o}</option>`).join('');
     const isChecked = checkedItems.some(c=>c.dept===r.dept&&c.num===r.num);
-    const rowBg = normStatus==='긴급요청' ? '#FCE4EC' :
+    const rowBg = normStatus==='신청취소' ? '#F1EFE8' :
+                  normStatus==='긴급요청' ? '#FCE4EC' :
                   (normStatus==='입고 완료'||normStatus==='수리 완료') ? '#E2EFDA' :
                   normStatus==='발주 완료' ? '#E6F1FB' :
                   normStatus==='수리 진행 중' ? '#EEEDFE' :
                   normStatus==='기안 진행 중' ? '#FFF2CC' : '';
-    return `<tr id="tr-${r.dept}-${r.num}" style="background:${rowBg}">
+    return `<tr id="tr-${r.dept}-${r.num}" style="background:${rowBg}${normStatus==='신청취소'?';opacity:0.6':''}">
       <td style="text-align:center">
         <input type="checkbox" ${isChecked?'checked':''} onchange="toggleCheck(this,'${r.dept}',${r.num},'${r.date}','${r.requester}','${r.item}','${r.spec}',${r.qty},'${r.unit}','${r.purpose}','${r.supplier}')">
       </td>
@@ -659,7 +662,7 @@ function renderListTable(data){
         </select>
       </td>
       <td style="text-align:center">
-        ${r.link ? `<a href="${r.link}" target="_blank" style="font-size:11px;color:var(--blue-mid);padding:3px 8px;border:1px solid var(--blue-mid);border-radius:4px;text-decoration:none">링크</a>` : ''}
+        ${r.link ? `<a href="${r.link}" target="_blank" style="font-size:11px;color:var(--blue-mid);padding:3px 8px;border:1px solid var(--blue-mid);border-radius:4px;text-decoration:none">링크</a>` : r.link||''}
       </td>
     </tr>`;
   }).join('');
