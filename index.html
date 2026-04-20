@@ -468,7 +468,7 @@ tr:hover td{background:var(--surface2)}
 
 <script>
 // ── API 설정 ──
-const API_URL = 'https://script.google.com/macros/s/AKfycbzMxj81QNhaceHNrPhXMdznh4za2k1dYqF201jFV4P7A-pKlqZRuZGXw0DdPQ-6NI-G/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxwEQarrelpVUDb_3pkEaQJlg1m4j7JQeurTjCBC3SP4BLsVn-lc3o7IXfMnBAqfNbG/exec';
 
 function apiGet(params) {
   return new Promise((resolve, reject) => {
@@ -836,7 +836,8 @@ async function submitForm(){
     const id=tr.id.replace('row-','');
     const item=document.getElementById('item-'+id)?.value;
     const qty=document.getElementById('qty-'+id)?.value;
-    if(!item||!qty){valid=false;return;}
+    const unit=document.getElementById('unit-'+id)?.value;
+    if(!item||!qty||!unit){valid=false;return;}
     items.push({
       item, qty:Number(qty),
       spec:document.getElementById('spec-'+id)?.value||'',
@@ -846,7 +847,7 @@ async function submitForm(){
       link:document.getElementById('link-'+id)?.value||'',
     });
   });
-  if(!valid){showToast('품명과 수량은 필수입니다');return;}
+  if(!valid){showToast('품명, 수량, 단위는 필수입니다');return;}
   showToast('등록 중...');
   try {
     const result = await apiPost({
