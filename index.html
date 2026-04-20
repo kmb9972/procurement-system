@@ -369,8 +369,8 @@ tr:hover td{background:var(--surface2)}
             <th style="min-width:180px">용도</th>
             <th style="width:70px">수량 *</th>
             <th style="width:80px">단위</th>
-            <th style="min-width:160px">링크/비고</th>
             <th style="min-width:120px">거래처</th>
+            <th style="min-width:160px">링크/비고</th>
             <th style="width:32px"></th>
           </tr>
         </thead>
@@ -801,8 +801,8 @@ function addRow(){
       </select>
     </td>
     <td><input class="cell-input" placeholder="거래처" id="supplier-${id}"></td>
-    <td><input class="cell-input" placeholder="링크 또는 메모" id="link-${id}"></td>
     <td><input class="cell-input" placeholder="거래처" id="supplier-${id}"></td>
+    <td><input class="cell-input" placeholder="링크 또는 메모" id="link-${id}"></td>
     <td><button class="del-btn" onclick="delRow(${id})" title="삭제">×</button></td>
   `;
   document.getElementById('items-tbody').appendChild(tr);
