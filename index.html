@@ -158,7 +158,15 @@ tr:hover td{background:var(--surface2)}
   #print-estimate{display:none!important}
   body.print-receipt #print-area{display:block!important}
   body.print-estimate #print-estimate{display:block!important}
-  .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:20px!important}
+  body.print-estimate #print-estimate .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:20px!important}
+  .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:12px!important}
+  .receipt-table{font-size:10px!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .receipt-table th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-size:10px!important;padding:6px 8px!important}
+  .receipt-table td{padding:5px 8px!important;white-space:nowrap!important;font-size:10px!important}
+  .receipt-table tr:nth-child(even) td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;background:#f8faff!important}
+  .receipt-top{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .approval-box{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  @page{size:A4 landscape;margin:8mm}
 }
 
 #print-area{display:none}
@@ -179,7 +187,15 @@ tr:hover td{background:var(--surface2)}
       <div style="flex:1;text-align:center"><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
       <div class="approval-box">
         <div class="approval-label">결 재</div>
-        <div style="display:flex"><div style="border-right:1px solid var(--border);padding:4px 10px;font-size:11px;text-align:center;background:var(--surface2)">팀장</div><div class="approval-sign"></div></div>
+        <div style="display:flex">
+          <div style="border-right:1px solid var(--border2);padding:8px 16px;text-align:center;min-width:80px">
+            <div style="width:52px;height:52px;border-radius:50%;border:3px solid #e74c3c;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;color:#e74c3c;font-size:15px;font-weight:900;letter-spacing:-1px">승인</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text2)">팀원</div>
+          </div>
+          <div style="padding:8px 16px;text-align:center;min-width:80px">
+            <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text2)">팀장</div>
+          </div>
+        </div>
       </div>
     </div>
     <table class="receipt-table"><thead><tr><th>번호</th><th>날짜</th><th>청구자</th><th>품명</th><th>품번/규격</th><th>수량</th><th>단위</th><th>용도</th><th>구입처</th></tr></thead><tbody id="print-tbody"></tbody></table>
@@ -387,7 +403,15 @@ tr:hover td{background:var(--surface2)}
       <div style="flex:1;text-align:center"><div class="receipt-title">물 품 청 구 서</div><div class="receipt-dept">부서명 : 종합안전센터</div></div>
       <div class="approval-box">
         <div class="approval-label">결 재</div>
-        <div style="display:flex"><div style="border-right:1px solid var(--border);padding:4px 10px;font-size:11px;text-align:center;background:var(--surface2)">팀장</div><div class="approval-sign"></div></div>
+        <div style="display:flex">
+          <div style="border-right:1px solid var(--border2);padding:8px 16px;text-align:center;min-width:80px">
+            <div style="width:52px;height:52px;border-radius:50%;border:3px solid #e74c3c;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;color:#e74c3c;font-size:15px;font-weight:900;letter-spacing:-1px">승인</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text2)">팀원</div>
+          </div>
+          <div style="padding:8px 16px;text-align:center;min-width:80px">
+            <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text2)">팀장</div>
+          </div>
+        </div>
       </div>
     </div>
     <table class="receipt-table">
@@ -661,8 +685,8 @@ function renderListTable(data){
           ${statusOpts}
         </select>
       </td>
-      <td style="text-align:center">
-        ${r.link ? `<a href="${r.link}" target="_blank" style="font-size:11px;color:var(--blue-mid);padding:3px 8px;border:1px solid var(--blue-mid);border-radius:4px;text-decoration:none">링크</a>` : r.link||''}
+      <td style="font-size:11px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.link||''}">
+        ${r.link||''}
       </td>
     </tr>`;
   }).join('');
@@ -785,6 +809,7 @@ function addRow(){
         <option>EA</option><option>롤</option><option>박스</option><option>미터</option><option>식</option>
       </select>
     </td>
+    <td><input class="cell-input" placeholder="거래처" id="supplier-${id}"></td>
     <td><input class="cell-input" placeholder="링크 또는 메모" id="link-${id}"></td>
     <td><button class="del-btn" onclick="delRow(${id})" title="삭제">×</button></td>
   `;
@@ -826,6 +851,7 @@ async function submitForm(){
       spec:document.getElementById('spec-'+id)?.value||'',
       purpose:document.getElementById('purpose-'+id)?.value||'',
       unit:document.getElementById('unit-'+id)?.value||'',
+      supplier:document.getElementById('supplier-'+id)?.value||'',
       link:document.getElementById('link-'+id)?.value||'',
     });
   });
