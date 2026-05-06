@@ -408,7 +408,7 @@ tr:hover td{background:var(--surface2)}
       </div>
     </div>
     <table class="receipt-table">
-      <thead><tr><th style="width:36px">번호</th><th>날짜</th><th>청구자</th><th>품명</th><th>품번/규격</th><th style="width:50px">수량</th><th style="width:50px">단위</th><th>용도</th><th>구입처</th><th style="width:32px"></th></tr></thead>
+      <thead><tr><th style="width:36px">번호</th><th>날짜</th><th>공정</th><th>사용처</th><th>청구자</th><th>품명</th><th>품번/규격</th><th style="width:50px">수량</th><th style="width:50px">단위</th><th>용도</th><th>구입처</th><th style="width:32px"></th></tr></thead>
       <tbody id="receipt-tbody"><tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📄</div><div>청구 내역에서 ✓ 체크 후 이 화면에서 확인하세요</div></div></td></tr></tbody>
     </table>
     <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><div class="receipt-total-box">합계 수량 : — 건</div></div>
@@ -470,7 +470,7 @@ tr:hover td{background:var(--surface2)}
 
 <script>
 // ── API 설정 ──
-const API_URL = 'https://script.google.com/macros/s/AKfycbxwEQarrelpVUDb_3pkEaQJlg1m4j7JQeurTjCBC3SP4BLsVn-lc3o7IXfMnBAqfNbG/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxmxSo6GcBOj_RPpTDcMiOVPGcpcGMcdhvsjnkASj75x5tcPbCz8z8FEuq2AR3Kn0Y/exec';
 
 function apiGet(params) {
   return new Promise((resolve, reject) => {
@@ -489,12 +489,25 @@ function apiGet(params) {
   });
 }
 
-async function apiPost(data) {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify(data),
+function apiPost(data) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now();
+    // POST 데이터를 GET 파라미터로 변환 (Apps Script JSONP)
+    const params = new URLSearchParams({
+      callback: cbName,
+      payload: JSON.stringify(data)
+    });
+    const url = API_URL + '?' + params;
+    const script = document.createElement('script');
+    window[cbName] = (result) => {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(result);
+    };
+    script.onerror = () => reject(new Error('네트워크 오류'));
+    script.src = url;
+    document.body.appendChild(script);
   });
-  return res.json();
 }
 
 let donutCharts={},barChart=null;
@@ -636,7 +649,7 @@ function renderListTable(data){
                   normStatus==='기안 진행 중' ? '#FFF2CC' : '';
     return `<tr id="tr-${r.dept}-${r.num}" style="background:${rowBg}${normStatus==='신청취소'?';opacity:0.6':''}">
       <td style="text-align:center">
-        <input type="checkbox" ${isChecked?'checked':''} onchange="toggleCheck(this,'${r.dept}',${r.num},'${r.date}','${r.requester}','${r.item}','${r.spec}',${r.qty},'${r.unit}','${r.purpose}','${r.supplier}')">
+        <input type="checkbox" ${isChecked?'checked':''} onchange="toggleCheck(this,'${r.dept}',${r.num})">
       </td>
       <td><span class="dept-badge dept-${r.dept}">${r.dept}</span></td>
       <td>${r.date||''}</td><td>${r.process||''}</td><td>${r.location||''}</td><td>${r.requester||''}</td>
@@ -687,11 +700,15 @@ function renderListTable(data){
 }
 
 // 체크박스 토글
-function toggleCheck(el,dept,num,date,requester,item,spec,qty,unit,purpose,supplier){
+function toggleCheck(el,dept,num){
   if(el.checked){
-    checkedItems.push({dept,num,date,requester,item,spec,qty,unit,purpose,supplier});
+    // cachedListData에서 해당 항목 찾아서 추가
+    const found = cachedListData.find(r=>r.dept===dept&&String(r.num)===String(num));
+    if(found && !checkedItems.some(c=>c.dept===dept&&String(c.num)===String(num))){
+      checkedItems.push(found);
+    }
   } else {
-    checkedItems=checkedItems.filter(c=>!(c.dept===dept&&c.num===num));
+    checkedItems=checkedItems.filter(c=>!(c.dept===dept&&String(c.num)===String(num)));
   }
 }
 
@@ -742,6 +759,8 @@ function updateReceipt(){
   document.getElementById('receipt-tbody').innerHTML=checkedItems.map((r,i)=>`<tr>
     <td style="text-align:center">${i+1}</td>
     <td>${r.date||''}</td>
+    <td>${r.process||''}</td>
+    <td>${r.location||''}</td>
     <td>${r.requester||''}</td>
     <td>${r.item||''}</td>
     <td style="font-size:12px">${r.spec||''}</td>
@@ -882,7 +901,7 @@ function resetAll(){
 
 // ── 물품청구서 항목 제거 ──
 function removeFromReceipt(dept, num){
-  checkedItems=checkedItems.filter(c=>!(c.dept===dept&&c.num==num));
+  checkedItems=checkedItems.filter(c=>!(c.dept===dept&&String(c.num)===String(num)));
   // 체크박스도 해제
   const tr=document.getElementById(`tr-${dept}-${num}`);
   if(tr){ const cb=tr.querySelector('input[type=checkbox]'); if(cb) cb.checked=false; }
