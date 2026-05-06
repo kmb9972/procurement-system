@@ -162,21 +162,21 @@ tr:hover td{background:var(--surface2)}
   .receipt-card{box-shadow:none!important;border:none!important;max-width:100%!important;padding:8px!important;height:auto!important;min-height:0!important;overflow:hidden!important}
   .receipt-table{font-size:11px!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;width:100%!important;table-layout:fixed!important;border-collapse:collapse!important}
   .receipt-table th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;font-size:11px!important;padding:6px 5px!important;white-space:nowrap!important;overflow:hidden!important}
-  .receipt-table td{padding:5px 5px!important;white-space:nowrap!important;font-size:11px!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  .receipt-table th:nth-child(1){width:22px!important}
-  .receipt-table th:nth-child(2){width:62px!important}
-  .receipt-table th:nth-child(3){width:38px!important}
-  .receipt-table th:nth-child(4){width:52px!important}
-  .receipt-table th:nth-child(5){width:38px!important}
-  .receipt-table th:nth-child(6){width:70px!important}
-  .receipt-table th:nth-child(7){width:100px!important}
-  .receipt-table th:nth-child(8){width:22px!important}
-  .receipt-table th:nth-child(9){width:22px!important}
-  .receipt-table th:nth-child(10){width:80px!important}
-  .receipt-table th:nth-child(11){width:70px!important}
+  .receipt-table td{padding:5px 5px!important;white-space:normal!important;font-size:11px!important;word-break:break-all!important}
+  .receipt-table th:nth-child(1){width:3%!important}
+  .receipt-table th:nth-child(2){width:9%!important}
+  .receipt-table th:nth-child(3){width:7%!important}
+  .receipt-table th:nth-child(4){width:9%!important}
+  .receipt-table th:nth-child(5){width:7%!important}
+  .receipt-table th:nth-child(6){width:13%!important}
+  .receipt-table th:nth-child(7){width:22%!important}
+  .receipt-table th:nth-child(8){width:4%!important}
+  .receipt-table th:nth-child(9){width:4%!important}
+  .receipt-table th:nth-child(10){width:18%!important}
   .receipt-table tr:nth-child(even) td{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;background:#f8faff!important}
-  .receipt-top{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-  .approval-box{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    .receipt-top{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;display:flex!important;justify-content:center!important;align-items:flex-start!important;position:relative!important}
+  .approval-box{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;position:absolute!important;right:0!important;top:0!important}
+  .receipt-title{text-align:center!important;width:100%!important}
   .receipt-remove-btn{display:none!important}
   #print-area{height:auto!important;overflow:hidden!important}
   body.print-receipt{height:auto!important;overflow:hidden!important}
@@ -208,7 +208,7 @@ tr:hover td{background:var(--surface2)}
         </div>
       </div>
     </div>
-    <table class="receipt-table"><thead><tr><th>번호</th><th>날짜</th><th>공정</th><th>사용처</th><th>청구자</th><th>품명</th><th>품번/규격</th><th>수량</th><th>단위</th><th>용도</th><th>구입처</th></tr></thead><tbody id="print-tbody"></tbody></table>
+    <table class="receipt-table"><thead><tr><th>번호</th><th>날짜</th><th>공정</th><th>사용처</th><th>청구자</th><th>품명</th><th>품번/규격</th><th>수량</th><th>단위</th><th>구입처</th></tr></thead><tbody id="print-tbody"></tbody></table>
     <div style="display:flex;justify-content:flex-end"><div class="receipt-total-box" id="print-total">합계 : 0 건</div></div>
   </div>
 </div>
@@ -923,7 +923,23 @@ function removeFromReceipt(dept, num){
 
 // ── 인쇄 ──
 function printReceipt(){
-  document.getElementById('print-tbody').innerHTML=document.getElementById('receipt-tbody').innerHTML;
+  // receipt-tbody 내용에서 용도(10번째 td) 제거 후 print-tbody에 삽입
+  const rows = document.getElementById('receipt-tbody').querySelectorAll('tr');
+  let printHTML = '';
+  rows.forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if(tds.length === 0){ printHTML += tr.outerHTML; return; }
+    let rowHTML = '<tr>';
+    tds.forEach((td, i) => {
+      // 10번째(index 9)가 용도, 11번째(index 10)가 구입처, 12번째(index 11)가 X버튼
+      if(i === 9) return; // 용도 제외
+      if(i === 11) return; // X버튼 제외
+      rowHTML += td.outerHTML;
+    });
+    rowHTML += '</tr>';
+    printHTML += rowHTML;
+  });
+  document.getElementById('print-tbody').innerHTML = printHTML;
   document.body.classList.add('print-receipt');
   document.body.classList.remove('print-estimate');
   window.print();
