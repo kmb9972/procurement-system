@@ -681,7 +681,7 @@ function renderListTable(data){
           onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='transparent'"
           onchange="updateField('${r.dept}',${r.num},'unit',this.value)">
           <option value="">-</option>
-          ${['EA','롤','박스','미터','식'].map(u=>`<option ${r.unit===u?'selected':''}>${u}</option>`).join('')}
+          ${['EA','롤','박스','미터','식','Kg','통','Set'].map(u=>`<option ${r.unit===u?'selected':''}>${u}</option>`).join('')}
         </select>
       </td>
       <td style="width:90px">
